@@ -6,7 +6,7 @@
 # Usage: install-language-servers.sh [projects-root]
 #   projects-root  defaults to ~/Projects
 
-set -euo pipefail
+set -eo pipefail
 
 PROJECTS_ROOT="${1:-$HOME/Projects}"
 
@@ -69,8 +69,9 @@ detect_language() {
   return 1
 }
 
-# Build list of detected entries needing action
-declare -a TO_INSTALL_LABELS TO_INSTALL_DEFS
+# Build list of detected entries needing action.
+# Store resolved fields directly — avoids re-parsing in the install loop.
+declare -a TO_INSTALL_LABELS TO_INSTALL_CMDS TO_INSTALL_NOTES
 declare -a BUNDLED_LABELS MISSING_PREREQ_LABELS ALREADY_LABELS
 
 for i in "${!LANG_DEFS[@]}"; do
@@ -105,7 +106,8 @@ for i in "${!LANG_DEFS[@]}"; do
   fi
 
   TO_INSTALL_LABELS+=("$label")
-  TO_INSTALL_DEFS+=("$def")
+  TO_INSTALL_CMDS+=("$install_cmd")
+  TO_INSTALL_NOTES+=("$notes")
 done
 
 # ── Report findings ───────────────────────────────────────────────────────────
@@ -144,13 +146,12 @@ section "Installing"
 
 installed=0; failed=0
 
-for def in "${TO_INSTALL_DEFS[@]}"; do
-  IFS='|' read -r key label globs check prereq mac linux notes <<< "$def"
-  label="$(trim "$label")"
-  notes="$(trim "$notes")"
-  [[ "$OS" == "macos" ]] && install_cmd="$(trim "$mac")" || install_cmd="$(trim "$linux")"
+for i in "${!TO_INSTALL_LABELS[@]}"; do
+  label="${TO_INSTALL_LABELS[$i]}"
+  install_cmd="${TO_INSTALL_CMDS[$i]}"
+  notes="${TO_INSTALL_NOTES[$i]}"
 
-  info "$label…"
+  info "$label..."
   if eval "$install_cmd" 2>&1 | sed 's/^/    /'; then
     ok "$label — done"
     ((installed++)) || true
