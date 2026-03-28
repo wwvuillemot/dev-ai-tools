@@ -7,8 +7,9 @@ PROJECTS_ROOT ?= $(HOME)/Projects
 # ─── Primary targets ──────────────────────────────────────────────────────────
 
 .PHONY: setup
-setup: ## Bootstrap Serena on this machine (installs uv, links config, wires all clients)
+setup: ## Bootstrap Serena on this machine (installs uv, links config, wires all clients, then install-lsp)
 	@bash $(REPO_DIR)/install.sh
+	@$(MAKE) --no-print-directory install-lsp
 
 .PHONY: setup-projects
 setup-projects: ## Add .serena/project.yml to every project under ~/Projects
@@ -20,6 +21,11 @@ ifndef PATH
 	$(error PATH is required — usage: make setup-project PATH=~/Projects/my-repo)
 endif
 	@bash $(REPO_DIR)/scripts/setup-project.sh $(PATH)
+
+.PHONY: install-lsp
+install-lsp: ## Scan repos and interactively install Serena language servers
+	@chmod +x $(REPO_DIR)/scripts/install-language-servers.sh
+	@bash $(REPO_DIR)/scripts/install-language-servers.sh $(PROJECTS_ROOT)
 
 # ─── Maintenance ──────────────────────────────────────────────────────────────
 

@@ -14,7 +14,8 @@ make setup
 
 | Command | Description |
 |---|---|
-| `make setup` | Bootstrap this machine: install `uv`, link config, wire all three clients |
+| `make setup` | Full bootstrap: installs `uv`, wires all clients, then runs `install-lsp` |
+| `make install-lsp` | Scan repos, detect languages, interactively install language servers |
 | `make setup-projects` | Add `.serena/project.yml` to every project under `~/Projects` |
 | `make setup-project PATH=~/Projects/my-repo` | Add `.serena/project.yml` to one project |
 | `make update` | Pull latest changes from this repo and re-run `make setup` |

@@ -283,8 +283,6 @@ echo "  • Claude Code CLI  (global MCP, auto-detects project from cwd)"
 echo "  • VS Code          (user settings, uses \${workspaceFolder})"
 echo "  • Cursor IDE       (~/.cursor/mcp.json, auto-detects project from cwd)"
 echo
-echo "Optional next steps:"
-echo "  • Set up individual projects:    make setup-project PATH=~/Projects/my-repo"
-echo "  • Set up all ~/Projects at once: make setup-projects"
+echo "Next: selecting language servers…"
 echo
 echo "Serena docs: https://oraios.github.io/serena/01-about/000_intro.html"
