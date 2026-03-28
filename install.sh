@@ -283,6 +283,19 @@ echo "  • Claude Code CLI  (global MCP, auto-detects project from cwd)"
 echo "  • VS Code          (user settings, uses \${workspaceFolder})"
 echo "  • Cursor IDE       (~/.cursor/mcp.json, auto-detects project from cwd)"
 echo
-echo "Next: selecting language servers…"
-echo
 echo "Serena docs: https://oraios.github.io/serena/01-about/000_intro.html"
+echo
+
+# -----------------------------------------------------------------------------
+# 7. Language servers
+# -----------------------------------------------------------------------------
+section "Language servers"
+echo
+read -r -p "  Scan projects and install language servers now? [Y/n] " _lsp_answer
+_lsp_answer="${_lsp_answer:-Y}"
+echo
+echo "  (You can run 'make install-lsp' at any time to install or update language servers.)"
+echo
+if [[ "$_lsp_answer" =~ ^[Yy] ]]; then
+  bash "$REPO_DIR/scripts/install-language-servers.sh"
+fi
