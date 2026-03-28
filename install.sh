@@ -97,13 +97,13 @@ section "Claude Code (global MCP)"
 if ! command -v claude &>/dev/null; then
   warn "claude CLI not found — skipping Claude Code MCP setup."
   warn "Install Claude Code, then run:"
-  warn "  claude mcp add --global serena -- uvx --from git+https://github.com/oraios/serena serena start-mcp-server --context claude-code --project-from-cwd"
+  warn "  claude mcp add -s user serena -- uvx --from git+https://github.com/oraios/serena serena start-mcp-server --context claude-code --project-from-cwd"
 else
   # Check if serena is already registered
   if claude mcp list 2>/dev/null | grep -q "serena"; then
     ok "Serena already registered in Claude Code global MCP."
   else
-    claude mcp add --global serena -- \
+    claude mcp add -s user serena -- \
       uvx --from git+https://github.com/oraios/serena \
       serena start-mcp-server \
       --context claude-code \
