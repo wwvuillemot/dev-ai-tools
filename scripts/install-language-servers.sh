@@ -223,8 +223,6 @@ if cmd_exists fzf; then
 
 # ── fallback: numbered checklist ──────────────────────────────────────────────
 else
-  echo "  (Install fzf for a better experience: brew install fzf)"
-  echo
   printf "  %-4s %-3s %-30s %s\n" "Num" "Sel" "Language" "Status"
   printf "  %-4s %-3s %-30s %s\n" "───" "───" "────────────────────────────" "──────────────────"
 
