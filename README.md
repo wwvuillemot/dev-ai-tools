@@ -1,6 +1,6 @@
 # serena-setup
 
-Portable, idempotent setup for [Serena](https://github.com/oraios/serena) — a semantic code-intelligence MCP server that gives AI tools (Claude Code, Cursor, VS Code Copilot, etc.) IDE-like symbol navigation, refactoring, and code understanding across 40+ languages.
+Portable, idempotent setup for [Serena](https://github.com/oraios/serena) — a semantic code-intelligence MCP server that gives AI tools (Claude Code, Cursor, VS Code, etc.) IDE-like symbol navigation, refactoring, and code understanding across 40+ languages.
 
 ## Quick start
 
@@ -10,71 +10,39 @@ cd ~/Projects/serena
 make setup
 ```
 
-## Available commands
+## Commands
 
 | Command | Description |
 |---|---|
-| `make setup` | Full bootstrap: installs `uv`, wires all clients, then runs `install-lsp` |
+| `make setup` | Full bootstrap: `uv`, `fzf`, config, all clients, then language servers |
 | `make install-lsp` | Scan repos, detect languages, interactively install language servers |
 | `make setup-projects` | Add `.serena/project.yml` to every project under `~/Projects` |
-| `make setup-project PATH=~/Projects/my-repo` | Add `.serena/project.yml` to one project |
-| `make update` | Pull latest changes from this repo and re-run `make setup` |
+| `make setup-project PATH=…` | Add `.serena/project.yml` to one project |
+| `make update` | Pull latest changes and re-run `make setup` |
 | `make check` | Verify Serena is correctly wired in all three clients |
 | `make cache-clean` | Force `uvx` to re-download Serena on next use |
 | `make help` | Show all targets |
 
-`PROJECTS_ROOT` defaults to `~/Projects`. Override with:
+`PROJECTS_ROOT` defaults to `~/Projects`. Override any target with:
 
 ```bash
-make setup-projects PROJECTS_ROOT=/some/other/path
+make install-lsp PROJECTS_ROOT=/some/other/path
 ```
 
 ---
 
-## What this repo manages
+## What `make setup` does
 
-| File | Purpose |
-|---|---|
-| `Makefile` | All commands — the primary interface |
-| `install.sh` | Called by `make setup`; idempotent bootstrap for all clients |
-| `serena_config.yml` | Global Serena config, symlinked to `~/.serena/serena_config.yml` |
-| `templates/cursor-mcp.json` | Cursor global MCP config (`~/.cursor/mcp.json`) |
-| `templates/vscode-mcp-snippet.json` | VS Code MCP entry merged into user `settings.json` |
-| `scripts/setup-project.sh` | Creates `.serena/project.yml` in a single project |
-| `scripts/setup-all-projects.sh` | Runs `setup-project.sh` across every project under `~/Projects` |
+1. Installs `uv` (Python package manager) if missing
+2. Installs `fzf` (interactive menu) if missing — brew, apt/dnf/pacman, or git clone fallback
+3. Pre-fetches Serena via `uvx` so first use is fast
+4. Copies `serena_config.yml` → `~/.serena/serena_config.yml`
+5. Registers Serena in **Claude Code** global MCP (`-s user`)
+6. Merges Serena into **VS Code** user `settings.json`
+7. Merges Serena into **Cursor** `~/.cursor/mcp.json`
+8. Runs `make install-lsp` — scans `~/Projects`, detects languages, and presents an interactive menu to install language servers
 
-Serena itself is **not** installed locally — it runs via `uvx` (always pulls latest).
-
----
-
-## Prerequisites
-
-- macOS, Linux, or WSL on Windows 11
-- `make` — ships with macOS (Xcode CLT) and all Linux distros
-- `uv` — `make setup` will install it if missing
-- `python3` — for JSON merging; ships with macOS and most Linux distros
-- For **Claude Code**: `claude` CLI installed and authenticated
-- Language servers for your languages (see [Language Support](https://oraios.github.io/serena/01-about/020_programming-languages.html))
-
----
-
-## Setting up a new machine
-
-```bash
-git clone https://github.com/wwvuillemot/serena ~/Projects/serena
-cd ~/Projects/serena
-make setup
-```
-
-`make setup` will:
-1. Install `uv` if not present
-2. Pre-fetch Serena so first use is fast
-3. Symlink `serena_config.yml` → `~/.serena/serena_config.yml`
-4. Register Serena in **Claude Code** global MCP
-5. Merge Serena into **VS Code** user `settings.json`
-6. Merge Serena into **Cursor** `~/.cursor/mcp.json`
-
-Verify everything is wired correctly:
+Verify everything after setup:
 
 ```bash
 make check
@@ -82,23 +50,70 @@ make check
 
 ---
 
-## Per-project setup (optional but recommended)
+## Language server installer
 
-Each project under `~/Projects` can have a `.serena/project.yml` for project-specific overrides and a `.serena/memories/` folder for Serena's persistent notes.
+`make install-lsp` (also called automatically by `make setup`):
 
-### All projects at once
+- Scans all repos under `~/Projects` for language indicators (`go.mod`, `Cargo.toml`, `tsconfig.json`, `*.py`, etc.)
+- Marks detected languages with `◆` and lists them first
+- Shows install status — already-installed and bundled servers are labelled
+- Uses `fzf` for the selection menu (Tab to toggle, Ctrl-A to select all, Enter to confirm)
+- Checks prerequisites before installing (e.g. won't attempt `gopls` if `go` isn't found)
+
+Supported languages: Go, Rust, Python (pyright), TypeScript/JS, Ruby, C/C++, C#/F#, Java, Scala, Kotlin, Haskell, Elixir, Erlang, OCaml, R, Fortran, Nix, Zig, PHP, Ansible, Vue, Solidity, Elm, Lua, Bash/Shell.
+
+---
+
+## What this repo manages
+
+| File | Purpose |
+|---|---|
+| `Makefile` | Primary interface — all commands |
+| `install.sh` | Called by `make setup`; idempotent bootstrap |
+| `serena_config.yml` | Global Serena config template, copied to `~/.serena/` at setup |
+| `templates/cursor-mcp.json` | Cursor global MCP config (`~/.cursor/mcp.json`) |
+| `templates/vscode-mcp-snippet.json` | VS Code MCP entry merged into user `settings.json` |
+| `scripts/install-language-servers.sh` | Interactive language server installer |
+| `scripts/setup-project.sh` | Creates `.serena/project.yml` in a single project |
+| `scripts/setup-all-projects.sh` | Runs `setup-project.sh` across every project under `~/Projects` |
+
+Serena itself is **not** installed locally — it runs on demand via `uvx`.
+
+---
+
+## Prerequisites
+
+- macOS, Linux, or WSL on Windows 11
+- `make` — ships with macOS (Xcode CLT) and all Linux distros
+- `python3` — for JSON merging; ships with macOS and most Linux distros
+- For **Claude Code**: `claude` CLI installed and authenticated
+- `uv` and `fzf` are installed automatically by `make setup`
+
+---
+
+## New machine setup
 
 ```bash
-make setup-projects
+git clone https://github.com/wwvuillemot/serena ~/Projects/serena
+cd ~/Projects/serena
+make setup
 ```
 
-### One project
+---
+
+## Per-project setup
+
+Each project can have a `.serena/project.yml` for overrides and a `.serena/memories/` folder for Serena's persistent notes about that codebase.
 
 ```bash
+# All projects under ~/Projects at once
+make setup-projects
+
+# One project
 make setup-project PATH=~/Projects/my-repo
 ```
 
-Both commands are idempotent — safe to re-run as new projects are added.
+Both are idempotent — safe to re-run as new projects are added.
 
 ---
 
@@ -106,24 +121,19 @@ Both commands are idempotent — safe to re-run as new projects are added.
 
 ### Claude Code CLI
 
-Configured globally — no per-project action needed.
+Configured globally with `--project-from-cwd` — Serena auto-detects the project from wherever `claude` is launched.
 
 ```bash
 cd ~/Projects/my-repo
-claude   # Serena detects the project from cwd automatically
-```
-
-Serena is registered with `--project-from-cwd`. To verify:
-
-```bash
-claude mcp list
+claude
+/mcp   # confirm serena shows as connected
 ```
 
 ### VS Code
 
-Serena is merged into your **user** `settings.json` with `${workspaceFolder}` — activates automatically when you open any folder.
+Merged into your **user** `settings.json` with `${workspaceFolder}` — activates automatically for any folder you open. No per-project config needed.
 
-If you prefer per-workspace config, create `.vscode/mcp.json` in the project:
+For a per-workspace override, create `.vscode/mcp.json` in the project:
 
 ```json
 {
@@ -140,9 +150,9 @@ If you prefer per-workspace config, create `.vscode/mcp.json` in the project:
 }
 ```
 
-### Cursor IDE
+### Cursor
 
-Configured globally via `~/.cursor/mcp.json`. To verify: **Cursor Settings → MCP** → confirm `serena` is listed.
+Configured globally via `~/.cursor/mcp.json`. Verify: **Cursor Settings → MCP** → `serena` should show as connected.
 
 ---
 
@@ -150,29 +160,32 @@ Configured globally via `~/.cursor/mcp.json`. To verify: **Cursor Settings → M
 
 ### Global config: `serena_config.yml`
 
-Symlinked to `~/.serena/serena_config.yml`. Edit it here — changes take effect immediately everywhere.
+Copied to `~/.serena/serena_config.yml` at setup time. Serena may write runtime state (project list, etc.) back to `~/.serena/` — this stays local and never touches the repo.
+
+To push a config change to all machines: edit `serena_config.yml`, commit, push, then run `make update` on each machine.
 
 Key options:
 
 ```yaml
-language_backend: language_servers   # or "JetBrains"
-log_level: INFO                      # DEBUG | INFO | WARNING | ERROR
-global_ignore_rules:                 # gitignore-style patterns
+language_backend: LSP          # or "JetBrains"
+log_level: 20                  # 10=DEBUG 20=INFO 30=WARNING 40=ERROR
+web_dashboard: true            # browser-based log viewer at http://localhost:24282
+web_dashboard_open_on_launch: false  # don't auto-open browser on every start
+ignored_paths:                 # gitignore-style, merged with per-project rules
   - "**/node_modules/**"
   - "**/.venv/**"
 ```
 
 ### Per-project config: `.serena/project.yml`
 
-Created by `make setup-project` or `make setup-projects`. Use it to override global settings:
+Created by `make setup-project`. Overrides global settings for that repo:
 
 ```yaml
-ignore_rules:
+ignored_paths:
   - "tests/fixtures/**"
-auto_onboarding: false
 ```
 
-Commit `project.yml` and `memories/` to the project repo so teammates share context. Exclude caches:
+Commit `project.yml` and `memories/` so teammates share context. Exclude caches:
 
 ```gitignore
 .serena/cache/
@@ -184,14 +197,14 @@ Commit `project.yml` and `memories/` to the project repo so teammates share cont
 ## Keeping Serena up to date
 
 ```bash
-# Pull this repo's config changes and re-run setup
+# Pull config changes from this repo and re-run setup
 make update
 
 # Force uvx to re-download the latest Serena release
 make cache-clean
 ```
 
-To pin to a specific Serena commit, replace the `--from` URL in `templates/cursor-mcp.json`, `templates/vscode-mcp-snippet.json`, and the `claude mcp add` line in `install.sh`:
+To pin to a specific Serena version, replace the `--from` URL in `templates/cursor-mcp.json`, `templates/vscode-mcp-snippet.json`, and the `claude mcp add` line in `install.sh`:
 
 ```
 --from git+https://github.com/oraios/serena@<commit-sha>
@@ -204,27 +217,24 @@ To pin to a specific Serena commit, replace the `--from` URL in `templates/curso
 **`make` not found**
 
 ```bash
-# macOS
-xcode-select --install
-# Linux
-sudo apt install make   # or equivalent
+xcode-select --install   # macOS
+sudo apt install make    # Linux
 ```
 
 **`uv` not in PATH after install**
 
-Add to `~/.zshrc` or `~/.bashrc`, then restart your shell:
-
 ```bash
-export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"   # add to ~/.zshrc or ~/.bashrc
 ```
 
-**Claude Code doesn't see Serena**
+**Serena shows `✘ failed` in `/mcp`**
 
 ```bash
-make check                          # diagnose
-claude mcp remove serena
-make setup                          # re-register
+make check           # diagnose
+make setup           # re-registers with correct absolute uvx path
 ```
+
+The most common cause is `uvx` not being in the PATH that Claude Code uses when spawning subprocesses. `make setup` resolves and bakes in the full path automatically.
 
 **VS Code settings not updated**
 
@@ -234,11 +244,16 @@ Manually merge `templates/vscode-mcp-snippet.json` into:
 
 **Onboarding runs every time**
 
-Serena writes memory files to `.serena/memories/`. If they're missing or gitignored, onboarding re-triggers. Either commit the memories or add `auto_onboarding: false` to `.serena/project.yml`.
+Serena writes memories to `.serena/memories/`. If they're missing or gitignored, onboarding re-triggers. Either commit the memories or set in `.serena/project.yml`:
+
+```yaml
+# not a real key — disable via mode flag instead:
+# pass --mode no-onboarding in the MCP args
+```
 
 **Slow first start**
 
-Expected — `uvx` downloads and caches Serena on first run. Run `make setup` to pre-cache on a new machine.
+Expected on first run — `uvx` downloads and caches Serena. `make setup` pre-caches it.
 
 ---
 
