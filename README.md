@@ -33,15 +33,17 @@ make install-lsp PROJECTS_ROOT=/some/other/path
 
 ## What `make setup` does
 
-1. Installs `uv` (Python package manager) if missing
-2. Pre-fetches Serena via `uvx` so first use is fast
-3. Copies `serena_config.yml` → `~/.serena/serena_config.yml`
-4. For each detected client, prompts to install or update:
+1. Detects platform (macOS / WSL / Linux) and displays it
+2. Validates prerequisites (`python3`, Xcode CLT on macOS)
+3. Installs `uv` (Python package manager) if missing
+4. Pre-fetches Serena via `uvx` so first use is fast
+5. Copies `serena_config.yml` → `~/.serena/serena_config.yml`
+6. For each detected client, prompts to install or update:
    - **Claude Code** — global MCP (`-s user`, `--project-from-cwd`)
-   - **VS Code** — dedicated `mcp.json` (also cleans up stale `settings.json` entries)
-   - **Cursor** — `~/.cursor/mcp.json`
-   - **Claude Desktop** — `claude_desktop_config.json` (macOS only)
-5. Runs `make install-lsp` — scans `~/Projects`, detects languages, and prompts per language to install servers
+   - **VS Code** — dedicated `mcp.json` (also cleans up stale `settings.json` entries; on WSL also syncs Windows-side config)
+   - **Cursor** — `~/.cursor/mcp.json` (Linux-side only on WSL)
+   - **Claude Desktop** — `claude_desktop_config.json` (macOS and Windows via WSL)
+7. Runs `make install-lsp` — scans `~/Projects`, detects languages, and prompts per language to install servers
 
 Verify everything after setup:
 
@@ -83,13 +85,36 @@ Serena itself is **not** installed locally — it runs on demand via `uvx`.
 
 ---
 
+## Supported platforms
+
+| Platform | Status | Notes |
+|---|---|---|
+| **macOS** (Apple Silicon + Intel) | Fully supported | Xcode Command Line Tools required for `python3`, `git`, `make` |
+| **WSL on Windows 11** | Fully supported | Windows-side VS Code and Claude Desktop are configured automatically via `wsl.exe`; Cursor is Linux-side only |
+| **Linux** (Ubuntu, Debian, etc.) | Fully supported | |
+| **Windows (native)** | Not supported | Use WSL instead |
+
+`make setup` auto-detects the platform and displays it at the top of the run:
+
+```
+=======================================================
+  Platform detected: macOS (arm64)
+=======================================================
+```
+
+### Platform-specific behaviour
+
+- **macOS** — validates Xcode CLT is installed; uses `brew` for packages when available; configures Claude Desktop at `/Applications/Claude.app`
+- **WSL** — resolves the Windows username (which may differ from `$USER`); syncs VS Code and Claude Desktop configs to the Windows side; wraps `uvx` commands through `wsl.exe` so Windows-native apps can invoke the Linux binary
+- **Linux** — uses `apt-get` (with `sudo` when not root) for system packages
+
 ## Prerequisites
 
 - macOS, Linux, or WSL on Windows 11
 - `make` — ships with macOS (Xcode CLT) and all Linux distros
-- `python3` — for JSON merging; ships with macOS and most Linux distros
+- `python3` — for JSON merging; ships with macOS and most Linux distros; validated at setup start
 - For **Claude Code**: `claude` CLI installed and authenticated
-- For **Claude Desktop**: `/Applications/Claude.app` installed (macOS only)
+- For **Claude Desktop**: `/Applications/Claude.app` (macOS) or Windows-side install (WSL)
 - `uv` is installed automatically by `make setup`
 
 ---
@@ -159,9 +184,12 @@ For a per-workspace override, create `.vscode/mcp.json` in the project:
 
 Configured globally via `~/.cursor/mcp.json`. Verify: **Cursor Settings → MCP** → `serena` should show as connected.
 
-### Claude Desktop (macOS)
+### Claude Desktop (macOS + Windows via WSL)
 
-Configured via `~/Library/Application Support/Claude/claude_desktop_config.json`. `make setup` detects the app and prompts to install. Restart Claude Desktop after setup to activate.
+- **macOS**: configured via `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **WSL**: configured via the Windows-side config at `%APPDATA%/Claude/claude_desktop_config.json`; commands are wrapped through `wsl.exe`
+
+`make setup` detects the app and prompts to install. Restart Claude Desktop after setup to activate.
 
 ---
 

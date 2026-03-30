@@ -75,8 +75,13 @@ check: ## Verify Serena is wired up correctly across all clients
 	@CLAUDE_DESKTOP_CONFIG=""; \
 	if [[ "$$(uname)" == "Darwin" ]]; then \
 		CLAUDE_DESKTOP_CONFIG="$(HOME)/Library/Application Support/Claude/claude_desktop_config.json"; \
+		CLAUDE_DESKTOP_APP="/Applications/Claude.app"; \
+	elif grep -qi microsoft /proc/version 2>/dev/null; then \
+		WIN_USER="$$(cmd.exe /C 'echo %USERNAME%' 2>/dev/null | tr -d '\r\n' || echo $$USER)"; \
+		CLAUDE_DESKTOP_CONFIG="/mnt/c/Users/$$WIN_USER/AppData/Roaming/Claude/claude_desktop_config.json"; \
+		CLAUDE_DESKTOP_APP="/mnt/c/Users/$$WIN_USER/AppData/Local/AnthropicClaude"; \
 	fi; \
-	if [[ -n "$$CLAUDE_DESKTOP_CONFIG" ]] && [[ -d "/Applications/Claude.app" ]]; then \
+	if [[ -n "$$CLAUDE_DESKTOP_CONFIG" ]] && { [[ -d "$$CLAUDE_DESKTOP_APP" ]] || [[ -d "/Applications/Claude.app" ]]; }; then \
 		if [[ -f "$$CLAUDE_DESKTOP_CONFIG" ]] && python3 -c \
 			"import json; d=json.load(open('$$CLAUDE_DESKTOP_CONFIG')); exit(0 if 'serena' in d.get('mcpServers',{}) else 1)" 2>/dev/null; then \
 			echo "  [✓] serena present in Claude Desktop config"; \
@@ -101,6 +106,19 @@ check: ## Verify Serena is wired up correctly across all clients
 		echo "  [✗] serena missing from VS Code mcp.json — run: make setup"; \
 	else \
 		echo "  [!] VS Code mcp.json not found — run: make setup"; \
+	fi
+	@if grep -qi microsoft /proc/version 2>/dev/null; then \
+		WIN_USER="$$(cmd.exe /C 'echo %USERNAME%' 2>/dev/null | tr -d '\r\n' || echo $$USER)"; \
+		WIN_MCP="/mnt/c/Users/$$WIN_USER/AppData/Roaming/Code/User/mcp.json"; \
+		echo "── VS Code Windows-side (WSL) ─────────────────────"; \
+		if [[ -f "$$WIN_MCP" ]] && python3 -c \
+			"import json; d=json.load(open('$$WIN_MCP')); exit(0 if 'serena' in d.get('servers',{}) else 1)" 2>/dev/null; then \
+			echo "  [✓] serena present in Windows-side VS Code mcp.json"; \
+		elif [[ -f "$$WIN_MCP" ]]; then \
+			echo "  [✗] serena missing from Windows-side VS Code — run: make setup"; \
+		else \
+			echo "  [!] Windows-side VS Code mcp.json not found"; \
+		fi; \
 	fi
 	@echo
 

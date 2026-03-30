@@ -31,6 +31,54 @@ detect_os() {
 
 OS="$(detect_os)"
 
+# Resolve the actual Windows username (often differs from WSL $USER)
+win_username() {
+  cmd.exe /C "echo %USERNAME%" 2>/dev/null | tr -d '\r\n' || echo "$USER"
+}
+
+# Resolve Windows APPDATA path from within WSL
+win_appdata() {
+  local wuser
+  wuser="$(win_username)"
+  echo "${APPDATA:-/mnt/c/Users/$wuser/AppData/Roaming}"
+}
+
+# -----------------------------------------------------------------------------
+# 0. Detected platform
+# -----------------------------------------------------------------------------
+echo
+echo "======================================================="
+case "$OS" in
+  macos) echo "  Platform detected: macOS ($(uname -m))" ;;
+  wsl)   echo "  Platform detected: WSL (Windows Subsystem for Linux)" ;;
+  linux) echo "  Platform detected: Linux ($(uname -m))" ;;
+esac
+echo "======================================================="
+
+# -----------------------------------------------------------------------------
+# 0b. Prerequisites
+# -----------------------------------------------------------------------------
+section "Prerequisites"
+
+# macOS: Xcode Command Line Tools provide git, python3, make, clang
+if [[ "$OS" == "macos" ]] && ! xcode-select -p &>/dev/null; then
+  warn "Xcode Command Line Tools not found — these provide git, python3, and build tools."
+  info "Run:  xcode-select --install"
+  info "Then re-run this script after installation completes."
+  exit 1
+fi
+
+# python3 is required for JSON config merging
+if ! command -v python3 &>/dev/null; then
+  if [[ "$OS" == "macos" ]]; then
+    warn "python3 not found. Install Xcode CLT (xcode-select --install) or run: brew install python3"
+  else
+    warn "python3 not found. Install it with your package manager (e.g. sudo apt-get install -y python3)"
+  fi
+  exit 1
+fi
+ok "python3 found: $(python3 --version)"
+
 # -----------------------------------------------------------------------------
 # 1. Check / install uv
 # -----------------------------------------------------------------------------
@@ -238,9 +286,11 @@ PYEOF
   fi
 fi
 
-# WSL note: if using VS Code Remote-WSL the mcp.json lives on the Windows side
+# WSL note: if using VS Code Remote-WSL the mcp.json lives on the Windows side.
+# The Windows-side config must invoke uvx via wsl.exe since the binary is a
+# Linux executable.
 if [[ "$OS" == "wsl" ]]; then
-  WIN_APPDATA="${APPDATA:-/mnt/c/Users/$USER/AppData/Roaming}"
+  WIN_APPDATA="$(win_appdata)"
   WIN_MCP="$WIN_APPDATA/Code/User/mcp.json"
   WIN_SETTINGS="$WIN_APPDATA/Code/User/settings.json"
   if [[ -d "$(dirname "$WIN_MCP")" ]]; then
@@ -256,14 +306,16 @@ if os.path.exists(mcp_path):
     shutil.copy2(mcp_path, mcp_path + ".bak")
 with open(snippet_path) as f:
     snippet = json.load(f)
-for server in snippet.get("servers", {}).values():
-    if server.get("command") == "uvx":
-        server["command"] = uvx_path
+# On WSL, Windows-side VS Code must call uvx through wsl.exe
+for name, server in snippet.get("servers", {}).items():
+    if server.get("command") in ("uvx", uvx_path):
+        server["command"] = "wsl.exe"
+        server["args"] = ["--", uvx_path] + server.get("args", [])
 existing.setdefault("servers", {}).update(snippet["servers"])
 with open(mcp_path, "w") as f:
     json.dump(existing, f, indent=2)
     f.write("\n")
-print(f"  [✓] Wrote serena to {mcp_path}")
+print(f"  [✓] Wrote serena to {mcp_path} (via wsl.exe → {uvx_path})")
 PYEOF
   fi
 fi
@@ -276,7 +328,10 @@ section "Cursor IDE (~/.cursor/mcp.json)"
 CURSOR_MCP="$HOME/.cursor/mcp.json"
 CURSOR_TEMPLATE="$REPO_DIR/templates/cursor-mcp.json"
 
-if [[ ! -d "$HOME/.cursor" ]]; then
+if [[ "$OS" == "wsl" && ! -d "$HOME/.cursor" ]]; then
+  info "Cursor IDE — Windows-side Cursor is not supported from WSL. Skipping."
+  info "  (If Cursor is installed inside WSL, create ~/.cursor/ and re-run.)"
+elif [[ ! -d "$HOME/.cursor" ]]; then
   info "Cursor IDE not found — skipping."
 else
   _cur_already=false
@@ -350,6 +405,12 @@ section "Claude Desktop"
 claude_desktop_app_installed() {
   case "$OS" in
     macos) [[ -d "/Applications/Claude.app" ]] ;;
+    wsl)
+      local wuser
+      wuser="$(win_username)"
+      [[ -d "/mnt/c/Users/$wuser/AppData/Local/AnthropicClaude" ]] \
+        || [[ -d "/mnt/c/Users/$wuser/AppData/Local/Programs/claude-desktop" ]]
+      ;;
     *)     return 1 ;;
   esac
 }
@@ -357,6 +418,11 @@ claude_desktop_app_installed() {
 claude_desktop_config_path() {
   case "$OS" in
     macos) echo "$HOME/Library/Application Support/Claude/claude_desktop_config.json" ;;
+    wsl)
+      local wuser
+      wuser="$(win_username)"
+      echo "/mnt/c/Users/$wuser/AppData/Roaming/Claude/claude_desktop_config.json"
+      ;;
     *)     echo "" ;;
   esac
 }
@@ -385,10 +451,10 @@ if claude_desktop_app_installed; then
     if [[ -z "$UVX_PATH" ]]; then
       warn "uvx not found in PATH — cannot configure Claude Desktop. Re-run after fixing PATH."
     else
-      python3 - "$CLAUDE_DESKTOP_CONFIG" "$CLAUDE_DESKTOP_TEMPLATE" "$UVX_PATH" <<'PYEOF'
+      python3 - "$CLAUDE_DESKTOP_CONFIG" "$CLAUDE_DESKTOP_TEMPLATE" "$UVX_PATH" "$OS" <<'PYEOF'
 import json, sys, os, shutil
 
-config_path, template_path, uvx_path = sys.argv[1], sys.argv[2], sys.argv[3]
+config_path, template_path, uvx_path, os_type = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 
 if os.path.exists(config_path):
     with open(config_path) as f:
@@ -403,14 +469,19 @@ else:
 with open(template_path) as f:
     template = json.load(f)
 
-# Substitute resolved uvx path
+# Substitute resolved uvx path; on WSL wrap through wsl.exe for Windows-side app
 for server in template.get("mcpServers", {}).values():
-    if server.get("command") == "uvx":
-        server["command"] = uvx_path
+    if server.get("command") in ("uvx", uvx_path):
+        if os_type == "wsl":
+            server["command"] = "wsl.exe"
+            server["args"] = ["--", uvx_path] + server.get("args", [])
+        else:
+            server["command"] = uvx_path
 
 config.setdefault("mcpServers", {})
 config["mcpServers"].update(template["mcpServers"])
 
+os.makedirs(os.path.dirname(config_path), exist_ok=True)
 if os.path.exists(config_path):
     shutil.copy2(config_path, config_path + ".bak")
 
@@ -444,9 +515,9 @@ section "Complete"
 echo
 echo "Serena is configured for:"
 echo "  • Claude Code CLI  (global MCP, auto-detects project from cwd)"
-echo "  • VS Code          (user settings, uses \${workspaceFolder})"
+echo "  • VS Code          (user mcp.json; on WSL also syncs Windows-side via wsl.exe)"
 echo "  • Cursor IDE       (~/.cursor/mcp.json, auto-detects project from cwd)"
-echo "  • Claude Desktop   (claude_desktop_config.json, if installed)"
+echo "  • Claude Desktop   (macOS + Windows via WSL, if installed)"
 echo
 echo "Serena docs: https://oraios.github.io/serena/01-about/000_intro.html"
 echo
