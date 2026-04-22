@@ -8,6 +8,8 @@ A curated bundle of CLI tools that improve the developer experience when working
 - **[Graphify](https://graphify.net)** — an open-source knowledge-graph *skill* for AI coding assistants. Turns any folder of code, docs, papers, images, or video into a queryable graph.
 - **[RTK](https://github.com/rtk-ai/rtk)** — "Rust Token Killer," a CLI proxy that filters and compresses command output to cut LLM token usage by 60–90% on common dev commands.
 
+> 👉 **[USING.md](./USING.md)** — practical guide for verifying and leveraging each tool in an AI-coding session.
+
 ## Quick start
 
 ```bash
