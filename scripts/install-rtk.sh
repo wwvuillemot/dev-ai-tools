@@ -30,7 +30,9 @@ RTK_CURL_URL="https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/ins
 install_rtk_macos() {
   if command -v brew &>/dev/null; then
     info "Installing via Homebrew..."
-    brew install rtk
+    # Skip brew's 30-day auto-cleanup: it can fail on unrelated root-owned
+    # files elsewhere in the prefix and kill this script under `set -e`.
+    HOMEBREW_NO_INSTALL_CLEANUP=1 brew install rtk
   else
     info "Homebrew not found — using curl installer..."
     curl -fsSL "$RTK_CURL_URL" | sh
