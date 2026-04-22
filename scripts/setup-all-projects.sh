@@ -19,9 +19,9 @@ count=0
 skipped=0
 
 while IFS= read -r -d '' dir; do
-  # Skip the serena-setup repo itself and hidden dirs
+  # Skip the dev-ai-tools repo itself and hidden dirs
   basename_dir="$(basename "$dir")"
-  if [[ "$basename_dir" == serena || "$basename_dir" == .* ]]; then
+  if [[ "$basename_dir" == dev-ai-tools || "$basename_dir" == .* ]]; then
     continue
   fi
 

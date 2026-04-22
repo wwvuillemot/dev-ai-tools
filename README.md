@@ -1,12 +1,18 @@
-# serena-setup
+# dev-ai-tools
 
-Portable, idempotent setup for [Serena](https://github.com/oraios/serena) — a semantic code-intelligence MCP server that gives AI tools (Claude Code, Claude Desktop, Cursor, VS Code) IDE-like symbol navigation, refactoring, and code understanding across 40+ languages.
+A curated bundle of CLI tools that improve the developer experience when working with AI coding agents. One idempotent `make setup` installs and wires each, across macOS, Linux, and WSL.
+
+**What's included:**
+
+- **[Serena](https://github.com/oraios/serena)** — a semantic code-intelligence MCP server that gives AI tools (Claude Code, Claude Desktop, Cursor, VS Code) IDE-like symbol navigation, refactoring, and code understanding across 40+ languages.
+- **[Graphify](https://graphify.net)** — an open-source knowledge-graph *skill* for AI coding assistants. Turns any folder of code, docs, papers, images, or video into a queryable graph.
+- **[RTK](https://github.com/rtk-ai/rtk)** — "Rust Token Killer," a CLI proxy that filters and compresses command output to cut LLM token usage by 60–90% on common dev commands.
 
 ## Quick start
 
 ```bash
-git clone https://github.com/wwvuillemot/serena ~/Projects/serena
-cd ~/Projects/serena
+git clone https://github.com/wwvuillemot/dev-ai-tools ~/Projects/dev-ai-tools
+cd ~/Projects/dev-ai-tools
 make setup
 ```
 
@@ -14,12 +20,14 @@ make setup
 
 | Command | Description |
 |---|---|
-| `make setup` | Full bootstrap: `uv`, config, all detected clients, then language servers |
+| `make setup` | Full bootstrap: `uv`, RTK, Serena config + all detected clients, Graphify + per-client wiring, language servers |
+| `make install-graphify` | Install/update Graphify and offer to wire it into each detected client |
+| `make install-rtk` | Install/update RTK (brew on macOS when available, else curl) |
 | `make install-lsp` | Scan repos, detect languages, prompt per language to install servers |
 | `make setup-projects` | Add `.serena/project.yml` to every project under `~/Projects` |
 | `make setup-project PATH=…` | Add `.serena/project.yml` to one project |
 | `make update` | Pull latest changes and re-run `make setup` |
-| `make check` | Verify Serena is correctly wired in all detected clients |
+| `make check` | Verify Serena, Graphify, and RTK are correctly wired in all detected clients |
 | `make cache-clean` | Force `uvx` to re-download Serena on next use |
 | `make help` | Show all targets |
 
@@ -37,13 +45,15 @@ make install-lsp PROJECTS_ROOT=/some/other/path
 2. Validates prerequisites (`python3`, Xcode CLT on macOS)
 3. Installs `uv` (Python package manager) if missing
 4. Pre-fetches Serena via `uvx` so first use is fast
-5. Copies `serena_config.yml` → `~/.serena/serena_config.yml`
-6. For each detected client, prompts to install or update:
+5. Installs **RTK** — Homebrew on macOS when available, else the official curl installer (skipped/updated idempotently if already present)
+6. Copies `serena_config.yml` → `~/.serena/serena_config.yml`
+7. For each detected client, prompts to install or update Serena:
    - **Claude Code** — global MCP (`-s user`, `--project-from-cwd`)
    - **VS Code** — dedicated `mcp.json` (also cleans up stale `settings.json` entries; on WSL also syncs Windows-side config)
    - **Cursor** — `~/.cursor/mcp.json` (Linux-side only on WSL)
    - **Claude Desktop** — `claude_desktop_config.json` (macOS and Windows via WSL)
-7. Runs `make install-lsp` — scans `~/Projects`, detects languages, and prompts per language to install servers
+8. Installs **Graphify** (`uv tool install graphifyy`) and, for each detected client Graphify's CLI supports, prompts to run `graphify <client> install`
+9. Runs `make install-lsp` — scans `~/Projects`, detects languages, and prompts per language to install servers
 
 Verify everything after setup:
 
@@ -77,11 +87,14 @@ Supported languages: Go, Rust, Python (pyright), TypeScript/JS, Ruby, C/C++, C#/
 | `templates/cursor-mcp.json` | Cursor global MCP config (`~/.cursor/mcp.json`) |
 | `templates/claude-desktop-mcp.json` | Claude Desktop MCP config (`claude_desktop_config.json`) |
 | `templates/vscode-mcp-snippet.json` | VS Code MCP entry merged into user `mcp.json` |
+| `scripts/install-graphify.sh` | Installs Graphify CLI + prompts to wire it into each detected client |
+| `scripts/install-rtk.sh` | Installs/updates RTK (brew-or-curl) |
 | `scripts/install-language-servers.sh` | Interactive language server installer |
 | `scripts/setup-project.sh` | Creates `.serena/project.yml` in a single project |
 | `scripts/setup-all-projects.sh` | Runs `setup-project.sh` across every project under `~/Projects` |
 
 Serena itself is **not** installed locally — it runs on demand via `uvx`.
+Graphify installs as a managed `uv` tool; RTK installs as a native binary (via brew or the upstream installer).
 
 ---
 
@@ -122,8 +135,8 @@ Serena itself is **not** installed locally — it runs on demand via `uvx`.
 ## New machine setup
 
 ```bash
-git clone https://github.com/wwvuillemot/serena ~/Projects/serena
-cd ~/Projects/serena
+git clone https://github.com/wwvuillemot/dev-ai-tools ~/Projects/dev-ai-tools
+cd ~/Projects/dev-ai-tools
 make setup
 ```
 
@@ -298,8 +311,16 @@ Expected on first run — `uvx` downloads and caches Serena. `make setup` pre-ca
 
 ## References
 
+**Serena**
 - [Serena GitHub](https://github.com/oraios/serena)
 - [Serena Docs](https://oraios.github.io/serena/01-about/000_intro.html)
 - [Configuration Reference](https://oraios.github.io/serena/02-usage/050_configuration.html)
 - [Client Setup Guide](https://oraios.github.io/serena/02-usage/030_clients.html)
 - [Language Support](https://oraios.github.io/serena/01-about/020_programming-languages.html)
+
+**Graphify**
+- [graphify.net](https://graphify.net)
+- [safishamsi/graphify on GitHub](https://github.com/safishamsi/graphify)
+
+**RTK**
+- [rtk-ai/rtk on GitHub](https://github.com/rtk-ai/rtk)

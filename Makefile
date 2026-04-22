@@ -7,7 +7,7 @@ PROJECTS_ROOT ?= $(HOME)/Projects
 # ─── Primary targets ──────────────────────────────────────────────────────────
 
 .PHONY: setup
-setup: ## Bootstrap Serena on this machine (installs uv, wires all clients, prompts for language servers)
+setup: ## Bootstrap dev-ai-tools (Serena, Graphify, RTK) — wires MCP clients, prompts for language servers
 	@bash $(REPO_DIR)/install.sh
 
 .PHONY: setup-projects
@@ -26,6 +26,16 @@ install-lsp: ## Scan repos and interactively install Serena language servers
 	@chmod +x $(REPO_DIR)/scripts/install-language-servers.sh
 	@bash $(REPO_DIR)/scripts/install-language-servers.sh $(PROJECTS_ROOT)
 
+.PHONY: install-graphify
+install-graphify: ## Install Graphify (uv tool install graphifyy) and wire it into detected clients
+	@chmod +x $(REPO_DIR)/scripts/install-graphify.sh
+	@bash $(REPO_DIR)/scripts/install-graphify.sh
+
+.PHONY: install-rtk
+install-rtk: ## Install RTK (brew on macOS when available, else curl installer)
+	@chmod +x $(REPO_DIR)/scripts/install-rtk.sh
+	@bash $(REPO_DIR)/scripts/install-rtk.sh
+
 # ─── Maintenance ──────────────────────────────────────────────────────────────
 
 .PHONY: update
@@ -34,7 +44,7 @@ update: ## Pull latest config changes and re-run setup
 	@$(MAKE) setup
 
 .PHONY: check
-check: ## Verify Serena is wired up correctly across all clients
+check: ## Verify Serena, Graphify, and RTK are wired up correctly across all clients
 	@echo
 	@echo "── uv ──────────────────────────────────────────────"
 	@if command -v uv &>/dev/null; then \
@@ -119,6 +129,20 @@ check: ## Verify Serena is wired up correctly across all clients
 		else \
 			echo "  [!] Windows-side VS Code mcp.json not found"; \
 		fi; \
+	fi
+	@echo
+	@echo "── Graphify ───────────────────────────────────────"
+	@if command -v graphify &>/dev/null; then \
+		echo "  [✓] graphify: $$(graphify --version 2>/dev/null | head -1)"; \
+	else \
+		echo "  [✗] graphify not found — run: make install-graphify"; \
+	fi
+	@echo
+	@echo "── RTK ────────────────────────────────────────────"
+	@if command -v rtk &>/dev/null; then \
+		echo "  [✓] rtk: $$(rtk --version 2>/dev/null | head -1)"; \
+	else \
+		echo "  [✗] rtk not found — run: make install-rtk"; \
 	fi
 	@echo
 

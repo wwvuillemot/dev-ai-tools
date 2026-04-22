@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Serena Setup — install.sh
-# Managed via: https://github.com/wwvuillemot/serena
+# dev-ai-tools — install.sh
+# Managed via: https://github.com/wwvuillemot/dev-ai-tools
 #
-# Idempotent bootstrap for Serena MCP on macOS and Linux (including WSL).
+# Idempotent bootstrap for a curated bundle of developer-experience AI tools
+# (Serena, Graphify, RTK) on macOS and Linux (including WSL).
 # Run from the repo root: bash install.sh
 # =============================================================================
 set -euo pipefail
@@ -117,6 +118,11 @@ UVX_PATH="$(which uvx 2>/dev/null || echo "")"
 # Pre-cache Serena so first use is fast
 info "Pre-fetching Serena via uvx (this may take a moment on first run)..."
 uvx --from git+https://github.com/oraios/serena serena --help &>/dev/null && ok "Serena cached" || warn "Pre-fetch failed — will download on first use"
+
+# -----------------------------------------------------------------------------
+# 1b. RTK (Rust Token Killer) — standalone CLI, no client wiring
+# -----------------------------------------------------------------------------
+bash "$REPO_DIR/scripts/install-rtk.sh"
 
 # -----------------------------------------------------------------------------
 # 2. Global Serena config (~/.serena/serena_config.yml)
@@ -501,11 +507,18 @@ else
 fi
 
 # -----------------------------------------------------------------------------
+# 6b. Graphify — knowledge-graph skill, installs CLI then prompts per client
+# -----------------------------------------------------------------------------
+bash "$REPO_DIR/scripts/install-graphify.sh"
+
+# -----------------------------------------------------------------------------
 # 7. Make scripts executable
 # -----------------------------------------------------------------------------
 section "Script permissions"
 chmod +x "$REPO_DIR/scripts/setup-project.sh"
 chmod +x "$REPO_DIR/scripts/setup-all-projects.sh"
+chmod +x "$REPO_DIR/scripts/install-rtk.sh"
+chmod +x "$REPO_DIR/scripts/install-graphify.sh"
 ok "Scripts are executable"
 
 # -----------------------------------------------------------------------------
@@ -513,13 +526,19 @@ ok "Scripts are executable"
 # -----------------------------------------------------------------------------
 section "Complete"
 echo
-echo "Serena is configured for:"
-echo "  • Claude Code CLI  (global MCP, auto-detects project from cwd)"
-echo "  • VS Code          (user mcp.json; on WSL also syncs Windows-side via wsl.exe)"
-echo "  • Cursor IDE       (~/.cursor/mcp.json, auto-detects project from cwd)"
-echo "  • Claude Desktop   (macOS + Windows via WSL, if installed)"
+echo "dev-ai-tools installed:"
+echo "  • Serena     — semantic code intelligence MCP"
+echo "      - Claude Code CLI  (global MCP, auto-detects project from cwd)"
+echo "      - VS Code          (user mcp.json; on WSL also syncs Windows-side via wsl.exe)"
+echo "      - Cursor IDE       (~/.cursor/mcp.json, auto-detects project from cwd)"
+echo "      - Claude Desktop   (macOS + Windows via WSL, if installed)"
+echo "  • Graphify   — knowledge-graph skill (per-client prompts above)"
+echo "  • RTK        — CLI token-reduction proxy"
 echo
-echo "Serena docs: https://oraios.github.io/serena/01-about/000_intro.html"
+echo "Docs:"
+echo "  • Serena   : https://oraios.github.io/serena/01-about/000_intro.html"
+echo "  • Graphify : https://graphify.net"
+echo "  • RTK      : https://github.com/rtk-ai/rtk"
 echo
 
 # -----------------------------------------------------------------------------

@@ -26,7 +26,7 @@ else
 # See: https://oraios.github.io/serena/02-usage/050_configuration.html
 
 # Uncomment and set the languages used in this project.
-# Run 'make install-lsp' from the serena-setup repo to install the servers.
+# Run 'make install-lsp' from the dev-ai-tools repo to install the servers.
 # languages:
 #   - python
 #   - typescript
