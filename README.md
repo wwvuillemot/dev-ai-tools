@@ -20,12 +20,28 @@ make setup
 
 ## Commands
 
+`make setup` installs everything including a `dev-ai-tools` wrapper on `PATH` (symlinked into `~/.local/bin` by default). From that point on, **you don't need to `cd` back to this repo** — call `dev-ai-tools <subcommand>` from any project directory to wire tools into that project.
+
+### Per-project (run from the target repo)
+
 | Command | Description |
 |---|---|
-| `make setup` | Full bootstrap: `uv`, RTK, Serena config + all detected clients, Graphify + per-client wiring, language servers |
-| `make install-graphify` | Install/update Graphify and offer to wire it into each detected client |
+| `dev-ai-tools install-graphify` | Install/update Graphify CLI and wire it into the current project's detected clients (writes `CLAUDE.md` / `AGENTS.md` sections + hooks into the cwd) |
+| `dev-ai-tools install-serena` | Scaffold `.serena/` (project.yml + memory templates) in the current directory. Alias: `setup-serena`. |
+| `dev-ai-tools check` | Report per-project wiring status for the cwd, plus the global `make check` output |
+| `dev-ai-tools update` | `git pull` on the dev-ai-tools repo and re-run `make setup` |
+| `dev-ai-tools help` | Show wrapper usage |
+
+### Repo-wide (run from this repo)
+
+| Command | Description |
+|---|---|
+| `make setup` | Full bootstrap: `uv`, RTK, Serena config + all detected clients, Graphify + per-client wiring, `dev-ai-tools` symlink, language servers |
+| `make install-graphify` | Install/update Graphify and offer to wire it into each detected client (targets this repo) |
 | `make install-rtk` | Install/update RTK (brew on macOS when available, else curl) |
 | `make install-lsp` | Scan repos, detect languages, prompt per language to install servers |
+| `make install-cli` | Symlink `bin/dev-ai-tools` into `$DEV_AI_TOOLS_BIN` (default `~/.local/bin`) |
+| `make uninstall-cli` | Remove the `dev-ai-tools` symlink |
 | `make setup-projects` | Add `.serena/project.yml` to every project under `~/Projects` |
 | `make setup-project PATH=…` | Add `.serena/project.yml` to one project |
 | `make update` | Pull latest changes and re-run `make setup` |
@@ -33,11 +49,14 @@ make setup
 | `make cache-clean` | Force `uvx` to re-download Serena on next use |
 | `make help` | Show all targets |
 
-`PROJECTS_ROOT` defaults to `~/Projects`. Override any target with:
+`PROJECTS_ROOT` defaults to `~/Projects`; `DEV_AI_TOOLS_BIN` defaults to `~/.local/bin`. Override any target with:
 
 ```bash
 make install-lsp PROJECTS_ROOT=/some/other/path
+make install-cli DEV_AI_TOOLS_BIN=/usr/local/bin
 ```
+
+> **macOS note**: `~/.local/bin` is not on `PATH` by default. `make install-cli` and `make setup` will warn with the exact line to add to `~/.zshrc` if needed.
 
 ---
 
@@ -55,7 +74,8 @@ make install-lsp PROJECTS_ROOT=/some/other/path
    - **Cursor** — `~/.cursor/mcp.json` (Linux-side only on WSL)
    - **Claude Desktop** — `claude_desktop_config.json` (macOS and Windows via WSL)
 8. Installs **Graphify** (`uv tool install graphifyy`) and, for each detected client Graphify's CLI supports, prompts to run `graphify <client> install`
-9. Runs `make install-lsp` — scans `~/Projects`, detects languages, and prompts per language to install servers
+9. Symlinks **`dev-ai-tools`** into `~/.local/bin` (override with `DEV_AI_TOOLS_BIN`) so per-project wiring works from any directory
+10. Runs `make install-lsp` — scans `~/Projects`, detects languages, and prompts per language to install servers
 
 Verify everything after setup:
 
@@ -85,6 +105,7 @@ Supported languages: Go, Rust, Python (pyright), TypeScript/JS, Ruby, C/C++, C#/
 |---|---|
 | `Makefile` | Primary interface — all commands |
 | `install.sh` | Called by `make setup`; idempotent bootstrap |
+| `bin/dev-ai-tools` | Per-project wrapper, symlinked onto `PATH` by `make install-cli` |
 | `serena_config.yml` | Global Serena config template, copied to `~/.serena/` at setup |
 | `templates/cursor-mcp.json` | Cursor global MCP config (`~/.cursor/mcp.json`) |
 | `templates/claude-desktop-mcp.json` | Claude Desktop MCP config (`claude_desktop_config.json`) |

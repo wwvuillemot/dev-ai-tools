@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+# =============================================================================
+# dev-ai-tools — per-project wrapper around the dev-ai-tools repo
+#
+# Installed as a symlink on PATH (default: ~/.local/bin/dev-ai-tools) via
+# `make install-cli`. Lets you wire Graphify/Serena into the current project
+# from any directory without first cd'ing to the dev-ai-tools repo.
+# =============================================================================
+set -euo pipefail
+
+# Resolve this script's real location, following symlinks portably.
+# (macOS ships BSD readlink which lacks -f.)
+resolve_self() {
+  local src="$1"
+  while [[ -L "$src" ]]; do
+    local dir
+    dir="$(cd -P "$(dirname "$src")" && pwd)"
+    src="$(readlink "$src")"
+    [[ "$src" != /* ]] && src="$dir/$src"
+  done
+  (cd -P "$(dirname "$src")" && pwd)
+}
+
+SELF_DIR="$(resolve_self "${BASH_SOURCE[0]}")"
+REPO_DIR="$(cd "$SELF_DIR/.." && pwd)"
+
+usage() {
+  cat <<EOF
+dev-ai-tools — wire Serena, Graphify, and related tools into any project.
+
+Usage:
+  dev-ai-tools <command>
+
+Per-project commands (operate on the current working directory):
+  install-graphify   Install/update Graphify CLI and wire it into this project's clients
+  install-serena     Scaffold .serena/ (project.yml + memory templates) in this project
+                     (alias: setup-serena — the global Serena MCP is wired by 'make setup')
+  check              Show per-project wiring status + global tool status
+
+Maintenance commands:
+  update             Pull latest changes and re-run setup on the dev-ai-tools repo
+  help               Show this help
+
+Examples:
+  cd ~/Projects/some-repo
+  dev-ai-tools install-graphify
+  dev-ai-tools install-serena
+  dev-ai-tools check
+
+dev-ai-tools repo: $REPO_DIR
+EOF
+}
+
+cmd_install_graphify() {
+  # install-graphify.sh:
+  #   1. Installs the graphify CLI globally if missing.
+  #   2. Runs `graphify <client> install` for detected clients — these writes
+  #      land in $PWD (CLAUDE.md, AGENTS.md, .claude/settings.json, etc.),
+  #      so the current directory must be the target project.
+  # DEV_AI_TOOLS_SKIP_CLI_UPGRADE=1 suppresses the upgrade prompt when the CLI
+  # is already installed — CLI maintenance belongs in `make install-graphify`.
+  DEV_AI_TOOLS_SKIP_CLI_UPGRADE=1 bash "$REPO_DIR/scripts/install-graphify.sh"
+}
+
+cmd_setup_serena() {
+  bash "$REPO_DIR/scripts/setup-project.sh" "$PWD"
+}
+
+cmd_check() {
+  local proj="$PWD"
+  echo
+  echo "── Current project: $proj ─────────────────────────"
+
+  if [[ -f "$proj/.serena/project.yml" ]]; then
+    echo "  [✓] .serena/project.yml present"
+  else
+    echo "  [!] No .serena/project.yml — run: dev-ai-tools setup-serena"
+  fi
+
+  if [[ -f "$proj/CLAUDE.md" ]] && grep -q "^## graphify" "$proj/CLAUDE.md" 2>/dev/null; then
+    echo "  [✓] graphify rules in CLAUDE.md"
+  else
+    echo "  [!] No graphify rules in CLAUDE.md — run: dev-ai-tools install-graphify"
+  fi
+
+  if [[ -f "$proj/AGENTS.md" ]] && grep -q "^## graphify" "$proj/AGENTS.md" 2>/dev/null; then
+    echo "  [✓] graphify rules in AGENTS.md (Codex)"
+  else
+    echo "  [!] No graphify rules in AGENTS.md — run: dev-ai-tools install-graphify"
+  fi
+
+  if [[ -f "$proj/.claude/settings.json" ]] && grep -q graphify "$proj/.claude/settings.json" 2>/dev/null; then
+    echo "  [✓] graphify PreToolUse hook in .claude/settings.json"
+  else
+    echo "  [!] No graphify hook in .claude/settings.json"
+  fi
+
+  if [[ -f "$proj/graphify-out/graph.json" ]]; then
+    echo "  [✓] graphify-out/graph.json exists (graph is built)"
+  else
+    echo "  [!] No graphify-out/graph.json — graph not yet built for this project"
+  fi
+
+  echo
+  echo "── System-wide (from $REPO_DIR) ───────────────────"
+  make -C "$REPO_DIR" --no-print-directory check
+}
+
+cmd_update() {
+  git -C "$REPO_DIR" pull --ff-only
+  make -C "$REPO_DIR" setup
+}
+
+case "${1:-help}" in
+  install-graphify)             shift; cmd_install_graphify "$@" ;;
+  install-serena|setup-serena)  shift; cmd_setup_serena "$@" ;;
+  check)                        shift; cmd_check "$@" ;;
+  update)                       shift; cmd_update "$@" ;;
+  help|-h|--help)               usage ;;
+  *)
+    echo "dev-ai-tools: unknown command: $1" >&2
+    echo "Run 'dev-ai-tools help' for available commands." >&2
+    exit 1
+    ;;
+esac

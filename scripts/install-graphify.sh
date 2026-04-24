@@ -50,22 +50,26 @@ if command -v graphify &>/dev/null; then
 fi
 
 if $_gf_already_installed; then
-  read -r -p "  Update Graphify (uv tool upgrade graphifyy)? [y/N] " _gf_answer
-  _gf_answer="${_gf_answer:-N}"
+  if [[ "${DEV_AI_TOOLS_SKIP_CLI_UPGRADE:-0}" == "1" ]]; then
+    info "CLI already installed — skipping upgrade check (run 'make install-graphify' from the dev-ai-tools repo to upgrade)."
+  else
+    read -r -p "  Update Graphify (uv tool upgrade graphifyy)? [y/N] " _gf_answer
+    _gf_answer="${_gf_answer:-N}"
+    if [[ "$_gf_answer" =~ ^[Yy] ]]; then
+      uv tool upgrade graphifyy || warn "uv tool upgrade returned non-zero; continuing"
+    else
+      info "Keeping current Graphify version."
+    fi
+  fi
 else
   read -r -p "  Install Graphify (uv tool install graphifyy)? [Y/n] " _gf_answer
   _gf_answer="${_gf_answer:-Y}"
-fi
-
-if [[ ! "$_gf_answer" =~ ^[Yy] ]]; then
-  info "Skipped Graphify install."
-  exit 0
-fi
-
-if $_gf_already_installed; then
-  uv tool upgrade graphifyy || warn "uv tool upgrade returned non-zero; continuing"
-else
-  uv tool install graphifyy
+  if [[ "$_gf_answer" =~ ^[Yy] ]]; then
+    uv tool install graphifyy
+  else
+    info "Skipped Graphify install — per-client wiring needs the graphify CLI. Exiting."
+    exit 0
+  fi
 fi
 
 # Re-source PATH in case uv tool install dropped a shim into ~/.local/bin

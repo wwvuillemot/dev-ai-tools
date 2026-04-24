@@ -519,7 +519,37 @@ chmod +x "$REPO_DIR/scripts/setup-project.sh"
 chmod +x "$REPO_DIR/scripts/setup-all-projects.sh"
 chmod +x "$REPO_DIR/scripts/install-rtk.sh"
 chmod +x "$REPO_DIR/scripts/install-graphify.sh"
+chmod +x "$REPO_DIR/bin/dev-ai-tools"
 ok "Scripts are executable"
+
+# -----------------------------------------------------------------------------
+# 7b. dev-ai-tools CLI — symlink onto PATH so it's callable from any repo
+# -----------------------------------------------------------------------------
+section "dev-ai-tools CLI"
+DEV_AI_TOOLS_BIN="${DEV_AI_TOOLS_BIN:-$HOME/.local/bin}"
+mkdir -p "$DEV_AI_TOOLS_BIN"
+_cli_target="$DEV_AI_TOOLS_BIN/dev-ai-tools"
+_cli_src="$REPO_DIR/bin/dev-ai-tools"
+if [[ -L "$_cli_target" && "$(readlink "$_cli_target")" == "$_cli_src" ]]; then
+  ok "dev-ai-tools already linked: $_cli_target"
+elif [[ -e "$_cli_target" && ! -L "$_cli_target" ]]; then
+  warn "$_cli_target exists and is not a symlink — skipping."
+  warn "  Remove it manually or set DEV_AI_TOOLS_BIN=<dir> to install elsewhere."
+else
+  ln -sfn "$_cli_src" "$_cli_target"
+  ok "Linked: $_cli_target → $_cli_src"
+fi
+case ":$PATH:" in
+  *":$DEV_AI_TOOLS_BIN:"*)
+    ok "$DEV_AI_TOOLS_BIN is on PATH"
+    ;;
+  *)
+    warn "$DEV_AI_TOOLS_BIN is NOT on PATH."
+    warn "  Add this line to your shell rc (~/.zshrc or ~/.bashrc):"
+    warn "    export PATH=\"$DEV_AI_TOOLS_BIN:\$PATH\""
+    warn "  Then reload your shell to use 'dev-ai-tools' from any directory."
+    ;;
+esac
 
 # -----------------------------------------------------------------------------
 # Done
@@ -534,6 +564,7 @@ echo "      - Cursor IDE       (~/.cursor/mcp.json, auto-detects project from cw
 echo "      - Claude Desktop   (macOS + Windows via WSL, if installed)"
 echo "  • Graphify   — knowledge-graph skill (per-client prompts above)"
 echo "  • RTK        — CLI token-reduction proxy"
+echo "  • dev-ai-tools CLI  — call 'dev-ai-tools install-graphify' or 'install-serena' from any repo"
 echo
 echo "Docs:"
 echo "  • Serena   : https://oraios.github.io/serena/01-about/000_intro.html"

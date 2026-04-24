@@ -1,6 +1,7 @@
 SHELL := /usr/bin/env bash
 REPO_DIR := $(shell pwd)
 PROJECTS_ROOT ?= $(HOME)/Projects
+DEV_AI_TOOLS_BIN ?= $(HOME)/.local/bin
 
 .DEFAULT_GOAL := help
 
@@ -35,6 +36,42 @@ install-graphify: ## Install Graphify (uv tool install graphifyy) and wire it in
 install-rtk: ## Install RTK (brew on macOS when available, else curl installer)
 	@chmod +x $(REPO_DIR)/scripts/install-rtk.sh
 	@bash $(REPO_DIR)/scripts/install-rtk.sh
+
+.PHONY: install-cli
+install-cli: ## Symlink dev-ai-tools wrapper to $(DEV_AI_TOOLS_BIN) so it's callable from any repo
+	@chmod +x $(REPO_DIR)/bin/dev-ai-tools
+	@mkdir -p "$(DEV_AI_TOOLS_BIN)"
+	@target="$(DEV_AI_TOOLS_BIN)/dev-ai-tools"; \
+	src="$(REPO_DIR)/bin/dev-ai-tools"; \
+	if [[ -L "$$target" && "$$(readlink "$$target")" == "$$src" ]]; then \
+		echo "  [✓] dev-ai-tools already linked: $$target → $$src"; \
+	elif [[ -e "$$target" && ! -L "$$target" ]]; then \
+		echo "  [✗] $$target exists and is not a symlink — refusing to overwrite."; \
+		echo "      Remove it manually or set DEV_AI_TOOLS_BIN=<dir> to install elsewhere."; \
+		exit 1; \
+	else \
+		ln -sfn "$$src" "$$target"; \
+		echo "  [✓] Linked: $$target → $$src"; \
+	fi; \
+	case ":$$PATH:" in \
+		*":$(DEV_AI_TOOLS_BIN):"*) \
+			echo "  [✓] $(DEV_AI_TOOLS_BIN) is on PATH" ;; \
+		*) \
+			echo "  [!] $(DEV_AI_TOOLS_BIN) is NOT on PATH."; \
+			echo "      Add this line to your shell rc (~/.zshrc or ~/.bashrc):"; \
+			echo "        export PATH=\"$(DEV_AI_TOOLS_BIN):\$$PATH\""; \
+			echo "      Then reload your shell: source ~/.zshrc  (or ~/.bashrc)" ;; \
+	esac
+
+.PHONY: uninstall-cli
+uninstall-cli: ## Remove the dev-ai-tools symlink from $(DEV_AI_TOOLS_BIN)
+	@target="$(DEV_AI_TOOLS_BIN)/dev-ai-tools"; \
+	if [[ -L "$$target" ]]; then \
+		rm "$$target"; \
+		echo "  [✓] Removed: $$target"; \
+	else \
+		echo "  [!] No symlink at $$target — nothing to remove."; \
+	fi
 
 # ─── Maintenance ──────────────────────────────────────────────────────────────
 
@@ -159,6 +196,7 @@ help: ## Show this help
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "  %-20s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 	@echo
 	@echo "Variables:"
-	@echo "  PROJECTS_ROOT   Root directory scanned by setup-projects (default: ~/Projects)"
-	@echo "  PATH            Project path for setup-project target"
+	@echo "  PROJECTS_ROOT      Root directory scanned by setup-projects (default: ~/Projects)"
+	@echo "  PATH               Project path for setup-project target"
+	@echo "  DEV_AI_TOOLS_BIN   Where install-cli symlinks the wrapper (default: ~/.local/bin)"
 	@echo
