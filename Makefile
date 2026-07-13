@@ -8,7 +8,7 @@ DEV_AI_TOOLS_BIN ?= $(HOME)/.local/bin
 # ─── Primary targets ──────────────────────────────────────────────────────────
 
 .PHONY: setup
-setup: ## Bootstrap dev-ai-tools (Serena, Graphify, RTK) — wires MCP clients, prompts for language servers
+setup: ## Bootstrap dev-ai-tools (Serena, Graphify, Backlog.md, RTK) — wires MCP clients, prompts for language servers
 	@bash $(REPO_DIR)/install.sh
 
 .PHONY: setup-projects
@@ -31,6 +31,11 @@ install-lsp: ## Scan repos and interactively install Serena language servers
 install-graphify: ## Install Graphify (uv tool install graphifyy) and wire it into detected clients
 	@chmod +x $(REPO_DIR)/scripts/install-graphify.sh
 	@bash $(REPO_DIR)/scripts/install-graphify.sh
+
+.PHONY: install-backlog
+install-backlog: ## Install Backlog.md (brew on macOS when available, else npm) and wire its MCP into detected clients
+	@chmod +x $(REPO_DIR)/scripts/install-backlog.sh
+	@bash $(REPO_DIR)/scripts/install-backlog.sh
 
 .PHONY: install-rtk
 install-rtk: ## Install RTK (brew on macOS when available, else curl installer)
@@ -93,7 +98,7 @@ endif
 	@$(MAKE) setup
 
 .PHONY: check
-check: ## Verify Serena, Graphify, and RTK are wired up correctly across all clients
+check: ## Verify Serena, Graphify, Backlog.md, and RTK are wired up correctly across all clients
 	@echo
 	@echo "── uv ──────────────────────────────────────────────"
 	@if command -v uv &>/dev/null; then \
@@ -185,6 +190,20 @@ check: ## Verify Serena, Graphify, and RTK are wired up correctly across all cli
 		echo "  [✓] graphify: $$(graphify --version 2>/dev/null | head -1)"; \
 	else \
 		echo "  [✗] graphify not found — run: make install-graphify"; \
+	fi
+	@echo
+	@echo "── Backlog.md ─────────────────────────────────────"
+	@if command -v backlog &>/dev/null; then \
+		echo "  [✓] backlog: $$(backlog --version 2>/dev/null | head -1)"; \
+		if command -v claude &>/dev/null; then \
+			if claude mcp list 2>/dev/null | grep -q backlog; then \
+				echo "  [✓] backlog registered in Claude Code global MCP"; \
+			else \
+				echo "  [✗] backlog not in Claude Code MCP — run: make install-backlog"; \
+			fi; \
+		fi; \
+	else \
+		echo "  [✗] backlog not found — run: make install-backlog"; \
 	fi
 	@echo
 	@echo "── RTK ────────────────────────────────────────────"

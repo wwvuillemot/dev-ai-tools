@@ -4,7 +4,7 @@
 # Managed via: https://github.com/wwvuillemot/dev-ai-tools
 #
 # Idempotent bootstrap for a curated bundle of developer-experience AI tools
-# (Serena, Graphify, RTK) on macOS and Linux (including WSL).
+# (Serena, Graphify, Backlog.md, RTK) on macOS and Linux (including WSL).
 # Run from the repo root: bash install.sh
 # =============================================================================
 set -euo pipefail
@@ -511,6 +511,11 @@ fi
 bash "$REPO_DIR/scripts/install-graphify.sh"
 
 # -----------------------------------------------------------------------------
+# 6c. Backlog.md — git-native task/spec/review layer, installs CLI + wires MCP
+# -----------------------------------------------------------------------------
+bash "$REPO_DIR/scripts/install-backlog.sh"
+
+# -----------------------------------------------------------------------------
 # 7. Make scripts executable
 # -----------------------------------------------------------------------------
 section "Script permissions"
@@ -518,6 +523,7 @@ chmod +x "$REPO_DIR/scripts/setup-project.sh"
 chmod +x "$REPO_DIR/scripts/setup-all-projects.sh"
 chmod +x "$REPO_DIR/scripts/install-rtk.sh"
 chmod +x "$REPO_DIR/scripts/install-graphify.sh"
+chmod +x "$REPO_DIR/scripts/install-backlog.sh"
 chmod +x "$REPO_DIR/bin/dev-ai-tools"
 ok "Scripts are executable"
 
@@ -562,13 +568,15 @@ echo "      - VS Code          (user mcp.json; on WSL also syncs Windows-side vi
 echo "      - Cursor IDE       (~/.cursor/mcp.json, auto-detects project from cwd)"
 echo "      - Claude Desktop   (macOS + Windows via WSL, if installed)"
 echo "  • Graphify   — knowledge-graph skill (per-client prompts above)"
+echo "  • Backlog.md — git-native task/spec/review MCP (per-client prompts above)"
 echo "  • RTK        — CLI token-reduction proxy"
 echo "  • dev-ai-tools CLI  — call 'dev-ai-tools install-graphify' or 'install-serena' from any repo"
 echo
 echo "Docs:"
-echo "  • Serena   : https://oraios.github.io/serena/01-about/000_intro.html"
-echo "  • Graphify : https://graphify.net"
-echo "  • RTK      : https://github.com/rtk-ai/rtk"
+echo "  • Serena     : https://oraios.github.io/serena/01-about/000_intro.html"
+echo "  • Graphify   : https://graphify.net"
+echo "  • Backlog.md : https://backlog.md"
+echo "  • RTK        : https://github.com/rtk-ai/rtk"
 echo
 
 # -----------------------------------------------------------------------------

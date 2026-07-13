@@ -12,6 +12,14 @@ make update VERSION=v0.5.1
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-07-13
+
+### Added
+- **Backlog.md** as a fourth bundled tool — a git-native task/spec/review layer for human+AI collaboration. Tasks are plain markdown files in the repo (no database); an MCP server (`backlog mcp start`) lets agents create, plan, and finalize work with review checkpoints before code exists.
+- `scripts/install-backlog.sh` — idempotent installer: `brew install backlog-md` on macOS when Homebrew is present, else `npm i -g backlog.md`. Registers the Backlog.md MCP server into each detected client (Claude Code via `claude mcp add -s user`; VS Code, Cursor, and Claude Desktop via JSON merge), including Windows-side VS Code/Claude Desktop through `wsl.exe` on WSL. Bakes in the absolute `backlog` path and backs up each config to `*.bak` before merging.
+- `make install-backlog` target, wired into `make setup` (step 9) and `make check` (verifies the `backlog` CLI and its Claude Code MCP registration).
+- README and USING.md sections for Backlog.md, including the three-checkpoint (spec → plan → code) review workflow.
+
 ## [0.5.4] - 2026-04-24
 
 ### Added

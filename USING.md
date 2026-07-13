@@ -1,10 +1,11 @@
 # Using dev-ai-tools in a session
 
-A practical guide for verifying and leveraging Serena, Graphify, and RTK once `make setup` has run.
+A practical guide for verifying and leveraging Serena, Graphify, Backlog.md, and RTK once `make setup` has run.
 
 > TL;DR:
 > - **Serena** — use *instead of* reading whole files when you want a symbol, its callers, or a refactor. Semantic, surgical, cheap.
 > - **Graphify** — run once per codebase to build a knowledge graph. Ask conceptual questions: "what talks to the billing service?", "explain the data flow."
+> - **Backlog.md** — break work into small markdown tasks with acceptance criteria; review the *spec* and *plan* before any code exists. `backlog board`, `backlog browser`.
 > - **RTK** — wrap noisy dev commands to cut 60–90% of output tokens. `rtk npm test`, `rtk cargo build`.
 
 > **Wire new projects without returning to this repo.** `make setup` installs a `dev-ai-tools` command on `PATH`. From any repo, run `dev-ai-tools install-graphify` or `dev-ai-tools install-serena`. See [the `dev-ai-tools` wrapper](#the-dev-ai-tools-wrapper) below.
@@ -21,7 +22,7 @@ make check
 dev-ai-tools check
 ```
 
-Expected output: a `[✓]` for each of uv, `~/.serena/serena_config.yml`, Claude Code MCP, Cursor, VS Code, Claude Desktop (if installed), Graphify, RTK. Any `[✗]` tells you exactly which `make install-*` target to run. `dev-ai-tools check` additionally reports whether the current project has `.serena/project.yml`, graphify rules in `CLAUDE.md` / `AGENTS.md`, and a built graph.
+Expected output: a `[✓]` for each of uv, `~/.serena/serena_config.yml`, Claude Code MCP, Cursor, VS Code, Claude Desktop (if installed), Graphify, Backlog.md, RTK. Any `[✗]` tells you exactly which `make install-*` target to run. `dev-ai-tools check` additionally reports whether the current project has `.serena/project.yml`, graphify rules in `CLAUDE.md` / `AGENTS.md`, and a built graph.
 
 ---
 
@@ -96,6 +97,47 @@ graphify update .
 
 ---
 
+## Backlog.md — git-native tasks, spec & plan review
+
+The point isn't project management — it's **review leverage**. Agents produce code faster than you can read it, so Backlog.md moves your attention upstream: you review a one-paragraph task spec and an implementation plan *before* any code exists, catching misunderstandings while they're cheap to fix.
+
+### Verify in a session
+
+- **CLI on PATH**: `backlog --version`.
+- **Claude Code**: run `/mcp` — you should see `backlog ✓ connected` alongside `serena`.
+- **Any MCP client**: ask the agent to read `backlog://workflow/overview`, or from the CLI run `backlog instructions overview`.
+
+### First-run in a project
+
+```bash
+cd ~/Projects/my-repo
+backlog init "My Repo"    # creates backlog/ store + appends agent instructions to AGENTS.md / CLAUDE.md
+```
+
+Backlog.md is **project-scoped** — like Serena, the global install is the binary + MCP wiring, but each repo needs its own `backlog init` to create the task store. The MCP server resolves the project from the working directory.
+
+### The three review checkpoints
+
+| Step | What the agent does | Your checkpoint |
+|---|---|---|
+| **1. Decompose** | Splits work into small tasks with descriptions + acceptance criteria | Read the task specs — is the scope right? |
+| **2. Plan** | Researches the codebase, writes an implementation plan *into the task* | Approve or revise the plan before code |
+| **3. Implement** | One task per session, one PR per task | Review code against the acceptance criteria |
+
+### When to reach for it
+
+- **Non-trivial features** where a wrong assumption costs hours — review the spec first.
+- **Running multiple agents / sessions** — tasks are the shared, git-versioned source of truth; one task per session keeps context windows small.
+- **Handoffs** — the task file (spec + plan + acceptance criteria) *is* the context a fresh session needs.
+
+### Session tips
+
+- **`backlog board`** for a terminal Kanban; **`backlog browser`** for a local drag-and-drop web UI.
+- Tasks are plain `.md` files under `backlog/` — commit them so the spec/plan lives in the PR and teammates (and future sessions) share it.
+- Ask the agent to "create Backlog.md tasks for this" *before* "implement this" — that's where the review leverage comes from.
+
+---
+
 ## RTK — Rust Token Killer
 
 ### Verify
@@ -137,7 +179,8 @@ RTK filters progress bars, duplicate lines, timestamps, and other low-signal noi
 2. **`/mcp`** in Claude Code — confirm serena is connected.
 3. **First time in the project?** Run `dev-ai-tools install-serena` (scaffolds `.serena/`) and `dev-ai-tools install-graphify` (wires graphify rules + hooks into `CLAUDE.md`, `AGENTS.md`, `.claude/settings.json`). Then ask the agent to run a Serena tool; it triggers onboarding and memory creation.
 4. **Big codebase you don't know?** Build the knowledge graph with `graphify` (see the Graphify section above), then ask conceptual questions — the agent will query it via the rules in `CLAUDE.md` / `AGENTS.md`.
-5. **Running builds/tests/installs?** Prefix with `rtk`, or let the hook auto-rewrite.
+5. **Non-trivial feature?** `backlog init` (once per repo), then have the agent create Backlog.md tasks first; review the spec + plan before it writes code.
+6. **Running builds/tests/installs?** Prefix with `rtk`, or let the hook auto-rewrite.
 
 ---
 
@@ -179,6 +222,8 @@ Then `source ~/.zshrc`. Linux distros and WSL usually have `~/.local/bin` on `PA
 | `/mcp` shows `serena ✘ failed` | `make check` → likely uvx PATH issue → `make setup` re-registers with the absolute uvx path |
 | `graphify --version` not found | Either `uv tool install graphifyy` didn't run or `~/.local/bin` isn't on PATH — `make install-graphify`, then `uv tool update-shell` |
 | `rtk` not found | `make install-rtk` (brew on macOS when present, else curl) |
+| `backlog` not found | `make install-backlog` (brew on macOS when present, else npm — needs Node.js) |
+| `/mcp` shows `backlog ✘ failed` | Usually a missing project store — run `backlog init` in the repo; check the entry uses the absolute `backlog` path (`make install-backlog` bakes it in) |
 | Graphify rules or hook missing in a client | Re-run `make install-graphify` and accept the per-client prompt; or run `graphify <client> install` directly (Claude Code, Codex, Cursor, VS Code, and others are supported — see `graphify --help`) |
 | Serena onboarding runs every session | Commit `.serena/memories/` for the project — if it's gitignored or missing, Serena thinks the project is new every time |
 
@@ -188,4 +233,5 @@ Then `source ~/.zshrc`. Linux distros and WSL usually have `~/.local/bin` on `PA
 
 - Serena: [docs](https://oraios.github.io/serena/01-about/000_intro.html) · [GitHub](https://github.com/oraios/serena)
 - Graphify: [graphify.net](https://graphify.net) · [GitHub](https://github.com/safishamsi/graphify)
+- Backlog.md: [backlog.md](https://backlog.md) · [GitHub](https://github.com/MrLesk/Backlog.md)
 - RTK: [GitHub](https://github.com/rtk-ai/rtk)

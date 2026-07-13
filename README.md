@@ -10,6 +10,7 @@ A curated bundle of CLI tools that improve the developer experience when working
 
 - **[Serena](https://github.com/oraios/serena)** — a semantic code-intelligence MCP server that gives AI tools (Claude Code, Claude Desktop, Cursor, VS Code) IDE-like symbol navigation, refactoring, and code understanding across 40+ languages.
 - **[Graphify](https://graphify.net)** — an open-source knowledge-graph *skill* for AI coding assistants. Turns any folder of code, docs, papers, images, or video into a queryable graph.
+- **[Backlog.md](https://backlog.md)** — a git-native task/spec/review layer for human+AI collaboration. Tasks are plain markdown files in your repo (no database); an MCP server lets agents create, plan, and finalize work with review checkpoints before code exists.
 - **[RTK](https://github.com/rtk-ai/rtk)** — "Rust Token Killer," a CLI proxy that filters and compresses command output to cut LLM token usage by 60–90% on common dev commands.
 
 > 👉 **[USING.md](./USING.md)** — practical guide for verifying and leveraging each tool in an AI-coding session.
@@ -43,6 +44,7 @@ make setup
 |---|---|
 | `make setup` | Full bootstrap: `uv`, RTK, Serena config + all detected clients, Graphify + per-client wiring, `dev-ai-tools` symlink, language servers |
 | `make install-graphify` | Install/update Graphify and offer to wire it into each detected client (targets this repo) |
+| `make install-backlog` | Install/update Backlog.md and wire its MCP into each detected client |
 | `make install-rtk` | Install/update RTK (brew on macOS when available, else curl) |
 | `make install-lsp` | Scan repos, detect languages, prompt per language to install servers |
 | `make install-cli` | Symlink `bin/dev-ai-tools` into `$DEV_AI_TOOLS_BIN` (default `~/.local/bin`) |
@@ -50,7 +52,7 @@ make setup
 | `make setup-projects` | Add `.serena/project.yml` to every project under `~/Projects` |
 | `make setup-project PATH=…` | Add `.serena/project.yml` to one project |
 | `make update` | Update to latest on `main` and re-run `make setup` — pass `VERSION=<tag>` to pin to a release (e.g. `make update VERSION=v0.5.0`) |
-| `make check` | Verify Serena, Graphify, and RTK are correctly wired in all detected clients |
+| `make check` | Verify Serena, Graphify, Backlog.md, and RTK are correctly wired in all detected clients |
 | `make lint` | Run ShellCheck locally against all shell scripts (same config as CI) |
 | `make preflight` | Pre-push checks: working tree clean, lint passes, in sync with origin, no unpushed tags |
 | `make cache-clean` | Force `uvx` to re-download Serena on next use |
@@ -81,8 +83,9 @@ make install-cli DEV_AI_TOOLS_BIN=/usr/local/bin
    - **Cursor** — `~/.cursor/mcp.json` (Linux-side only on WSL)
    - **Claude Desktop** — `claude_desktop_config.json` (macOS and Windows via WSL)
 8. Installs **Graphify** (`uv tool install graphifyy`) and, for each detected client Graphify's CLI supports, prompts to run `graphify <client> install`
-9. Symlinks **`dev-ai-tools`** into `~/.local/bin` (override with `DEV_AI_TOOLS_BIN`) so per-project wiring works from any directory
-10. Runs `make install-lsp` — scans `~/Projects`, detects languages, and prompts per language to install servers
+9. Installs **Backlog.md** (`brew install backlog-md` on macOS when available, else `npm i -g backlog.md`) and, for each detected client, prompts to register its MCP server (`backlog mcp start`)
+10. Symlinks **`dev-ai-tools`** into `~/.local/bin` (override with `DEV_AI_TOOLS_BIN`) so per-project wiring works from any directory
+11. Runs `make install-lsp` — scans `~/Projects`, detects languages, and prompts per language to install servers
 
 Verify everything after setup:
 
@@ -118,13 +121,14 @@ Supported languages: Go, Rust, Python (pyright), TypeScript/JS, Ruby, C/C++, C#/
 | `templates/claude-desktop-mcp.json` | Claude Desktop MCP config (`claude_desktop_config.json`) |
 | `templates/vscode-mcp-snippet.json` | VS Code MCP entry merged into user `mcp.json` |
 | `scripts/install-graphify.sh` | Installs Graphify CLI + prompts to wire it into each detected client |
+| `scripts/install-backlog.sh` | Installs Backlog.md CLI (brew-or-npm) + registers its MCP into each detected client |
 | `scripts/install-rtk.sh` | Installs/updates RTK (brew-or-curl) |
 | `scripts/install-language-servers.sh` | Interactive language server installer |
 | `scripts/setup-project.sh` | Creates `.serena/project.yml` in a single project |
 | `scripts/setup-all-projects.sh` | Runs `setup-project.sh` across every project under `~/Projects` |
 
 Serena itself is **not** installed locally — it runs on demand via `uvx`.
-Graphify installs as a managed `uv` tool; RTK installs as a native binary (via brew or the upstream installer).
+Graphify installs as a managed `uv` tool; Backlog.md installs as a native CLI (via brew or npm) and is wired in per-client as an MCP server; RTK installs as a native binary (via brew or the upstream installer).
 
 ---
 
@@ -352,6 +356,10 @@ Expected on first run — `uvx` downloads and caches Serena. `make setup` pre-ca
 - [graphify.net](https://graphify.net)
 - [safishamsi/graphify on GitHub](https://github.com/safishamsi/graphify)
 
+**Backlog.md**
+- [backlog.md](https://backlog.md)
+- [MrLesk/Backlog.md on GitHub](https://github.com/MrLesk/Backlog.md)
+
 **RTK**
 - [rtk-ai/rtk on GitHub](https://github.com/rtk-ai/rtk)
 
@@ -359,4 +367,4 @@ Expected on first run — `uvx` downloads and caches Serena. `make setup` pre-ca
 
 ## License
 
-MIT — see [LICENSE](./LICENSE). Third-party tools (Serena, Graphify, RTK, language servers) retain their own licenses; this repository only installs and wires them.
+MIT — see [LICENSE](./LICENSE). Third-party tools (Serena, Graphify, Backlog.md, RTK, language servers) retain their own licenses; this repository only installs and wires them.
