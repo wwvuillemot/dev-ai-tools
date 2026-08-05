@@ -13,6 +13,10 @@ A curated bundle of CLI tools that improve the developer experience when working
 - **[Backlog.md](https://backlog.md)** — a git-native task/spec/review layer for human+AI collaboration. Tasks are plain markdown files in your repo (no database); an MCP server lets agents create, plan, and finalize work with review checkpoints before code exists.
 - **[RTK](https://github.com/rtk-ai/rtk)** — "Rust Token Killer," a CLI proxy that filters and compresses command output to cut LLM token usage by 60–90% on common dev commands.
 
+**Claude Code plugins** (installed separately from `make setup` — see [Claude Code plugins](#claude-code-plugins)):
+
+- **[deep-review](./plugins/deep-review/)** — adversarial, lens-driven code review. Aims the review at what you care about (SOLID/DRY, performance, security, tenancy, governance), verifies every candidate finding by refutation, checks the change against the codebase's existing patterns, and posts inline PR comments.
+
 > 👉 **[USING.md](./USING.md)** — practical guide for verifying and leveraging each tool in an AI-coding session.
 > 📓 **[CHANGELOG.md](./CHANGELOG.md)** — release notes. Pin to a specific release with `make update VERSION=vX.Y.Z`.
 
@@ -23,6 +27,26 @@ git clone https://github.com/wwvuillemot/dev-ai-tools ~/Projects/dev-ai-tools
 cd ~/Projects/dev-ai-tools
 make setup
 ```
+
+## Claude Code plugins
+
+This repo is also a Claude Code plugin marketplace. The plugins are **not** installed by `make setup` — they're distributed through Claude Code's own plugin mechanism, which handles versioning and updates natively and needs no clone:
+
+```bash
+claude plugin marketplace add wwvuillemot/dev-ai-tools
+```
+
+Then install what you want:
+
+```bash
+claude plugin install deep-review
+```
+
+| Plugin | What it does |
+|---|---|
+| [deep-review](./plugins/deep-review/) | Adversarial, lens-driven code review with configurable lenses, refutation-based verification, codebase-pattern awareness, and inline PR delivery. |
+
+Update with `claude plugin update`, independently of `make update`. The two install paths are deliberately separate: `make setup` wires CLI tools and MCP servers into your machine, while plugins are content Claude Code loads directly.
 
 ## Commands
 
