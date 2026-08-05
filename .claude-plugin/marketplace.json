@@ -1,0 +1,29 @@
+{
+  "name": "dev-ai-tools",
+  "owner": {
+    "name": "Ward Vuillemot",
+    "url": "https://github.com/wwvuillemot"
+  },
+  "description": "Project-agnostic Claude Code plugins that improve the developer experience when working with AI coding agents. Companion to the CLI bundle installed by `make setup`.",
+  "version": "0.1.0",
+  "plugins": [
+    {
+      "name": "deep-review",
+      "source": "./plugins/deep-review",
+      "description": "Adversarial, lens-driven code review. Fans out finders across configurable lenses (correctness, design, performance, security, tenancy, governance, conventions), verifies every candidate by refutation, checks the change against the codebase's existing patterns, and delivers ranked findings as inline PR comments.",
+      "version": "0.1.0",
+      "author": { "name": "Ward Vuillemot" },
+      "category": "code-review",
+      "keywords": [
+        "code-review",
+        "adversarial",
+        "solid",
+        "dry",
+        "security",
+        "performance",
+        "governance",
+        "orchestrator"
+      ]
+    }
+  ]
+}

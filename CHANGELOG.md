@@ -12,6 +12,16 @@ make update VERSION=v0.5.1
 
 ## [Unreleased]
 
+### Added
+- This repo is now also a **Claude Code plugin marketplace** (`.claude-plugin/marketplace.json`). Plugins install via `claude plugin marketplace add wwvuillemot/dev-ai-tools` and update via `claude plugin update` — independent of `make setup`/`make update`, and with no clone required.
+- **`deep-review` plugin** (`plugins/deep-review/`) — adversarial, lens-driven code review:
+  - Configurable **lens registry** so a review can be aimed at a concern: `correctness`, `design` (SOLID/DRY/SRP/smells), `performance`, `security`, `tenancy`, `governance`, `conventions`. Lenses resolve from the built-in set, from any other installed plugin's `deep-review/lenses/`, and from `.claude/deep-review/lenses/` in the repo under review — later sources override by name, so orgs can ship private lenses without forking.
+  - **Refutation-based verification** — verifier agents are prompted to kill each candidate and default to refuted when uncertain, with perspective-diverse panels at `standard` and `deep`.
+  - **`prior-art-finder`** always runs, searching the codebase for existing abstractions the change duplicates, bypasses, or contradicts — the class of problem a diff-only review structurally cannot see.
+  - **Inline PR delivery** (`--post`) — line-level comments batched into a single review, replies into existing threads rather than duplicates, and threads never self-resolved.
+  - `tenancy` and `governance` carry `applies_when` preconditions and are skipped explicitly, not silently, on projects they don't fit.
+  - Docs: `plugins/deep-review/README.md` and `plugins/deep-review/EXTENDING.md`.
+
 ## [0.6.0] - 2026-07-13
 
 ### Added

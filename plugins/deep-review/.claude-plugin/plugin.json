@@ -1,0 +1,21 @@
+{
+  "name": "deep-review",
+  "version": "0.1.0",
+  "description": "Adversarial, lens-driven code review. Fans out finders across configurable lenses, verifies every candidate by refutation, checks the change against the codebase's existing patterns, and delivers ranked findings as inline PR comments.",
+  "author": { "name": "Ward Vuillemot" },
+  "homepage": "https://github.com/wwvuillemot/dev-ai-tools",
+  "repository": "https://github.com/wwvuillemot/dev-ai-tools",
+  "license": "MIT",
+  "keywords": [
+    "code-review",
+    "adversarial",
+    "solid",
+    "dry",
+    "srp",
+    "code-smell",
+    "security",
+    "performance",
+    "governance",
+    "orchestrator"
+  ]
+}
