@@ -15,12 +15,22 @@ make update VERSION=v0.5.1
 ### Added
 - This repo is now also a **Claude Code plugin marketplace** (`.claude-plugin/marketplace.json`). Plugins install via `claude plugin marketplace add wwvuillemot/dev-ai-tools` and update via `claude plugin update` — independent of `make setup`/`make update`, and with no clone required.
 - **`deep-review` plugin** (`plugins/deep-review/`) — adversarial, lens-driven code review:
-  - Configurable **lens registry** so a review can be aimed at a concern: `correctness`, `design` (SOLID/DRY/SRP/smells), `performance`, `security`, `tenancy`, `governance`, `conventions`. Lenses resolve from the built-in set, from any other installed plugin's `deep-review/lenses/`, and from `.claude/deep-review/lenses/` in the repo under review — later sources override by name, so orgs can ship private lenses without forking.
+  - Configurable **lens registry** so a review can be aimed at a concern: `correctness`, `design` (SOLID/DRY/SRP/smells), `performance`, `security`, `tenancy`, `governance`, `conventions`, `blast-radius`. Lenses resolve from the built-in set, from any other installed plugin's `deep-review/lenses/`, and from `.claude/deep-review/lenses/` in the repo under review — later sources override by name, so orgs can ship private lenses without forking.
   - **Refutation-based verification** — verifier agents are prompted to kill each candidate and default to refuted when uncertain, with perspective-diverse panels at `standard` and `deep`.
   - **`prior-art-finder`** always runs, searching the codebase for existing abstractions the change duplicates, bypasses, or contradicts — the class of problem a diff-only review structurally cannot see.
   - **Inline PR delivery** (`--post`) — line-level comments batched into a single review, replies into existing threads rather than duplicates, and threads never self-resolved.
   - `tenancy` and `governance` carry `applies_when` preconditions and are skipped explicitly, not silently, on projects they don't fit.
   - Docs: `plugins/deep-review/README.md` and `plugins/deep-review/EXTENDING.md`.
+  - **`blast-radius` lens** (plugin `0.2.0`, on by default) — asks the question a diff-only pass
+    cannot: *for each value, invariant, or timing property this change alters, who else depends on
+    the thing that changed?* Those consumers are usually not in the diff and their lines are usually
+    unchanged. Structural sibling of `prior-art-finder`. Found after a real miss: a change made a
+    polled value volatile, and an untouched `useEffect` in an untouched file began discarding a
+    user's unsaved edits on every poll tick.
+  - **Sharpened the kill-on-sight rule** in `SKILL.md` and the `correctness` lens. "Pre-existing
+    issues on lines the change did not touch" was steering reviewers away from exactly that class
+    of bug — "untouched" is not "pre-existing." The test is now explicit: *was this line correct
+    before the diff, and wrong after?*
 
 ## [0.6.0] - 2026-07-13
 

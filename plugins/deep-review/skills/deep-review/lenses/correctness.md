@@ -23,7 +23,8 @@ Hunt for code that does the wrong thing. This lens outranks every other when the
 
 - Anything a typechecker or compiler catches.
 - Theoretical inputs the system cannot produce — trace whether it can actually arrive.
-- Pre-existing bugs on untouched lines.
+- Pre-existing bugs on untouched lines — but only if they were *already* wrong. A line the
+  change made wrong is a new bug; see the `blast-radius` lens.
 - Missing tests. That is a `test-coverage` finding, not a correctness one.
 
 ## Failure scenario requirement
