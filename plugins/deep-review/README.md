@@ -23,7 +23,7 @@ Then `/plugin install deep-review`.
 
 | Flag | Values | Default |
 |---|---|---|
-| `--lens` | any registered lens name, or `all` | `correctness,design,conventions` |
+| `--lens` | any registered lens name, or `all` | `correctness,design,conventions,blast-radius` |
 | `--depth` | `quick`, `standard`, `deep` | `standard` |
 | `--post` | deliver as batched inline PR comments | off (chat report) |
 
@@ -38,6 +38,7 @@ Then `/plugin install deep-review`.
 | `tenancy` | Isolation between tenants/workspaces/users — unscoped queries, partition-blind caches, context loss in background work |
 | `governance` | Audit trails, personal-data handling, retention, residency, third-party egress |
 | `conventions` | The repo's written rules, plus its established patterns |
+| `blast-radius` | Consumers that depend on a property the change altered — identity, volatility, nullability, ordering, lifetime, failure mode |
 
 `tenancy` and `governance` carry an `applies_when` precondition and are skipped — explicitly, not silently — on projects they don't fit.
 

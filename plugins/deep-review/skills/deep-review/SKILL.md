@@ -2,7 +2,7 @@
 name: deep-review
 description: >-
   Adversarial, lens-driven code review. Selects review lenses (correctness, design/SOLID/DRY,
-  performance, security, tenancy, governance, conventions), fans out independent finder agents
+  performance, security, tenancy, governance, conventions, blast-radius), fans out independent finder agents
   per lens, verifies every candidate by refutation rather than confirmation, checks the change
   against the codebase's existing patterns and components, ranks what survives, and delivers
   findings as batched inline pull-request comments. Use when asked to "deep review", "review
@@ -26,7 +26,7 @@ A review harness with three commitments that ordinary review lacks:
 ```
 
 - **target** — omitted: the working diff vs. the merge base. `<PR#>` or a PR URL: that pull request. `<branch>`: that branch vs. its base.
-- **--lens** — comma-separated lens names, or `all`. Default: `correctness,design,conventions`.
+- **--lens** — comma-separated lens names, or `all`. Default: `correctness,design,conventions,blast-radius`.
 - **--depth** — `quick` (1 finder/lens, 1 verifier), `standard` (2 finders/lens, 3 verifiers), `deep` (3 finders/lens, 3 verifiers + sweep). Default `standard`.
 - **--post** — deliver as inline PR comments. Without it, report in chat only.
 
@@ -83,7 +83,9 @@ At `standard`/`deep`, give the three verifiers **different lenses** — correctn
 
 Kill on sight, without spending a verifier:
 
-- Pre-existing issues on lines the change did not touch
+- Pre-existing issues on lines the change did not touch — but "untouched" is not
+  "pre-existing." If the change is what made a previously-correct line wrong, that is a
+  new bug and it is in scope. Ask: was this correct before the diff, and wrong after?
 - Anything a linter, typechecker, compiler, or formatter catches
 - Style not written down in the repo's own instructions
 - Issues silenced deliberately in code (lint-ignore with a reason)
