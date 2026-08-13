@@ -7,6 +7,15 @@ DEV_AI_TOOLS_BIN ?= $(HOME)/.local/bin
 
 # ─── Primary targets ──────────────────────────────────────────────────────────
 
+# `PATH=` must never be used as a make ARGUMENT. Assigning it on the command line replaces the
+# recipe's PATH, so the shell can no longer find `bash` and every target dies with
+# `env: bash: No such file or directory` — which looks like a broken install, not a bad flag.
+# `ifndef PATH` cannot catch this: PATH is always defined by the environment. Detect the override
+# by its symptom instead.
+ifeq ($(findstring /usr/bin,$(PATH)),)
+$(error PATH= was passed as a make argument. That overrides the shell PATH and breaks every recipe. Use DIR= instead, e.g. make setup-project DIR=~/Projects/my-repo)
+endif
+
 .PHONY: setup
 setup: ## Bootstrap dev-ai-tools (Serena, Graphify, Backlog.md, RTK) — wires MCP clients, prompts for language servers
 	@bash $(REPO_DIR)/install.sh
@@ -16,11 +25,11 @@ setup-projects: ## Add .serena/project.yml to every project under ~/Projects
 	@bash $(REPO_DIR)/scripts/setup-all-projects.sh $(PROJECTS_ROOT)
 
 .PHONY: setup-project
-setup-project: ## Add .serena/project.yml to a single project (usage: make setup-project PATH=~/Projects/my-repo)
-ifndef PATH
-	$(error PATH is required — usage: make setup-project PATH=~/Projects/my-repo)
+setup-project: ## Add .serena/project.yml to a single project (usage: make setup-project DIR=~/Projects/my-repo)
+ifndef DIR
+	$(error DIR is required — usage: make setup-project DIR=~/Projects/my-repo)
 endif
-	@bash $(REPO_DIR)/scripts/setup-project.sh $(PATH)
+	@bash $(REPO_DIR)/scripts/setup-project.sh $(DIR)
 
 .PHONY: install-lsp
 install-lsp: ## Scan repos and interactively install Serena language servers
@@ -41,6 +50,13 @@ install-backlog: ## Install Backlog.md (brew on macOS when available, else npm) 
 install-rtk: ## Install RTK (brew on macOS when available, else curl installer)
 	@chmod +x $(REPO_DIR)/scripts/install-rtk.sh
 	@bash $(REPO_DIR)/scripts/install-rtk.sh
+
+.PHONY: install-skills
+install-skills: ## Install practice skills into a project (usage: make install-skills DIR=~/Projects/my-repo [ONLY=safe-actions,autonomy-contract])
+ifndef DIR
+	$(error DIR is required — usage: make install-skills DIR=~/Projects/my-repo [ONLY=a,b])
+endif
+	@bash $(REPO_DIR)/scripts/install-skills.sh $(DIR) "$(ONLY)"
 
 .PHONY: install-cli
 install-cli: ## Symlink dev-ai-tools wrapper to $(DEV_AI_TOOLS_BIN) so it's callable from any repo

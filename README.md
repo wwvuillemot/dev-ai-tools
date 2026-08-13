@@ -6,6 +6,19 @@
 
 A curated bundle of CLI tools that improve the developer experience when working with AI coding agents. One idempotent `make setup` installs and wires each, across macOS, Linux, and WSL.
 
+**Practices, not just tools.** `skills/` bundles the working habits that decide whether an agent's
+output is trustworthy — verification discipline, gates that can actually fail, an autonomy contract,
+destructive-action safety, and how to iterate on visual changes without burning rounds. Each was
+written after the failure it prevents actually happened. Install them into any repo, in each tool's
+native format:
+
+```sh
+make install-skills DIR=~/Projects/my-repo
+```
+
+Claude Code reads `.claude/skills/`, Cursor reads `.cursor/rules/`, everything else reads
+`AGENTS.md` — authored once, generated into all three. See [`skills/README.md`](./skills/README.md).
+
 **What's included:**
 
 - **[Serena](https://github.com/oraios/serena)** — a semantic code-intelligence MCP server that gives AI tools (Claude Code, Claude Desktop, Cursor, VS Code) IDE-like symbol navigation, refactoring, and code understanding across 40+ languages.
@@ -74,7 +87,7 @@ Update with `claude plugin update`, independently of `make update`. The two inst
 | `make install-cli` | Symlink `bin/dev-ai-tools` into `$DEV_AI_TOOLS_BIN` (default `~/.local/bin`) |
 | `make uninstall-cli` | Remove the `dev-ai-tools` symlink |
 | `make setup-projects` | Add `.serena/project.yml` to every project under `~/Projects` |
-| `make setup-project PATH=…` | Add `.serena/project.yml` to one project |
+| `make setup-project DIR=…` | Add `.serena/project.yml` to one project |
 | `make update` | Update to latest on `main` and re-run `make setup` — pass `VERSION=<tag>` to pin to a release (e.g. `make update VERSION=v0.5.0`) |
 | `make check` | Verify Serena, Graphify, Backlog.md, and RTK are correctly wired in all detected clients |
 | `make lint` | Run ShellCheck locally against all shell scripts (same config as CI) |
@@ -209,7 +222,7 @@ Each project can have a `.serena/project.yml` for overrides and a `.serena/memor
 make setup-projects
 
 # One project
-make setup-project PATH=~/Projects/my-repo
+make setup-project DIR=~/Projects/my-repo
 ```
 
 Both are idempotent — safe to re-run as new projects are added.

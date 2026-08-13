@@ -49,7 +49,7 @@ Expected output: a `[✓]` for each of uv, `~/.serena/serena_config.yml`, Claude
 
 - **Prefer `find_symbol` over `Read`** when you know what you're looking for. Cheaper on context, more precise.
 - **Commit `.serena/project.yml` and `.serena/memories/`** so teammates share the context. Gitignore `.serena/cache/` and `.serena/*.log`.
-- **Re-run `make setup-project PATH=~/Projects/foo`** to scaffold `.serena/project.yml` for a new repo.
+- **Re-run `make setup-project DIR=~/Projects/foo`** to scaffold `.serena/project.yml` for a new repo.
 
 ---
 
