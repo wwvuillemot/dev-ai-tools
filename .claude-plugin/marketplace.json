@@ -31,7 +31,7 @@
       "name": "practices",
       "source": "./plugins/practices",
       "description": "Working habits that decide whether an agent's output is trustworthy: verify before asserting, gates that must be observed failing, an autonomy contract, destructive-action safety, and visual iteration that doesn't burn rounds. Each written after the failure it prevents actually happened.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "author": {
         "name": "Ward Vuillemot"
       },
