@@ -34,6 +34,10 @@ a particular harness. A human reading these should get the same value an agent d
 
 ## Installing into a project (Cursor / Codex / any tool)
 
+Claude Code is served by the plugin above, so this **skips** `.claude/skills/` by default —
+installing both would load every skill twice from two independently drifting sources. Pass
+`WITH_CLAUDE=1` only if you are not using the plugin.
+
 ```sh
 make install-skills DIR=~/Projects/my-repo          # all skills
 make install-skills DIR=~/Projects/my-repo ONLY=safe-actions,autonomy-contract

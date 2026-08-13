@@ -17,7 +17,9 @@ claude plugin marketplace add wwvuillemot/dev-ai-tools
 claude plugin install practices@dev-ai-tools
 ```
 
-For Cursor, Codex, or any other tool, install the same skills into a repo directly:
+For Cursor, Codex, or any other tool, install the same skills into a repo directly. This
+**deliberately skips Claude Code** — the plugin above already serves it, and writing both would make
+Claude load every skill twice from two sources that drift:
 
 ```sh
 make install-skills DIR=~/Projects/my-repo

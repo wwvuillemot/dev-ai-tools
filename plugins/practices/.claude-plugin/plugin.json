@@ -1,6 +1,6 @@
 {
   "name": "practices",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Working habits that decide whether an agent's output is trustworthy: verify before asserting, gates that can actually fail, an autonomy contract, destructive-action safety, and visual iteration that doesn't burn rounds. Each written after the failure it prevents actually happened.",
   "author": { "name": "Ward Vuillemot" },
   "homepage": "https://github.com/wwvuillemot/dev-ai-tools",

@@ -18,6 +18,13 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC="$REPO_DIR/plugins/practices/skills"
 TARGET="${1:-}"
 ONLY="${2:-}"
+# Claude Code is served by the PLUGIN (`claude plugin install practices@dev-ai-tools`), so this
+# script does NOT write .claude/skills by default. Writing it too would give Claude the same five
+# skills from two places that drift independently — install the plugin, run this, and every skill
+# loads twice. Set WITH_CLAUDE=1 only when the plugin is not in use (no marketplace access, or a
+# pinned copy is wanted); then this copy is the single Claude source and the plugin must not be
+# installed alongside it.
+WITH_CLAUDE="${WITH_CLAUDE:-0}"
 
 BEGIN_MARK="<!-- BEGIN dev-ai-tools practice skills -->"
 END_MARK="<!-- END dev-ai-tools practice skills -->"
@@ -53,13 +60,24 @@ fm() { sed -n "s/^$2: //p" "$1" | head -1; }
 # Everything after the closing --- of the frontmatter.
 body() { awk 'f>1{print} /^---$/{f++}' "$1"; }
 
-echo "── Claude Code (.claude/skills/) ────────────────────"
-mkdir -p "$TARGET/.claude/skills"
-for s in "${skills[@]}"; do
-  mkdir -p "$TARGET/.claude/skills/$s"
-  cp "$SRC/$s/SKILL.md" "$TARGET/.claude/skills/$s/SKILL.md"
-  echo "  [✓] $s"
-done
+if [[ "$WITH_CLAUDE" == "1" ]]; then
+  echo "── Claude Code (.claude/skills/) ────────────────────"
+  for s in "${skills[@]}"; do
+    mkdir -p "$TARGET/.claude/skills/$s"
+    cp "$SRC/$s/SKILL.md" "$TARGET/.claude/skills/$s/SKILL.md"
+    echo "  [✓] $s"
+  done
+  if [[ -d "$HOME/.claude/plugins" ]] && grep -rqs '"practices"' "$HOME/.claude/plugins" 2>/dev/null; then
+    echo "  [!] the practices PLUGIN also appears to be installed — Claude will load these twice."
+    echo "      Uninstall one: claude plugin uninstall practices@dev-ai-tools, or drop WITH_CLAUDE=1"
+  fi
+else
+  echo "── Claude Code ──────────────────────────────────────"
+  echo "  [-] skipped — served by the plugin:"
+  echo "        claude plugin marketplace add wwvuillemot/dev-ai-tools"
+  echo "        claude plugin install practices@dev-ai-tools"
+  echo "      (WITH_CLAUDE=1 to copy them here instead, if you do not use the plugin)"
+fi
 
 echo "── Cursor (.cursor/rules/) ──────────────────────────"
 mkdir -p "$TARGET/.cursor/rules"
@@ -86,7 +104,9 @@ installed=()
 for d in "$SRC"/*/; do
   name="$(basename "$d")"
   [[ -f "$d/SKILL.md" ]] || continue
-  [[ -f "$TARGET/.claude/skills/$name/SKILL.md" ]] && installed+=("$name")
+  if [[ -f "$TARGET/.cursor/rules/$name.mdc" || -f "$TARGET/.claude/skills/$name/SKILL.md" ]]; then
+    installed+=("$name")
+  fi
 done
 
 echo "── Codex / generic (AGENTS.md) ──────────────────────"
@@ -99,7 +119,13 @@ section="$(mktemp)"
   echo "## Practice skills"
   echo ""
   echo "Working habits that decide whether this agent's output is trustworthy. Each was written after"
-  echo "the failure it prevents actually happened. Full text in \`.claude/skills/<name>/SKILL.md\`."
+  # Point at a path that actually exists. .claude/skills is opt-in now, so the full text normally
+  # lives in the Cursor rule (same body, different frontmatter).
+  if [[ "$WITH_CLAUDE" == "1" ]]; then
+    echo "the failure it prevents actually happened. Full text in \`.claude/skills/<name>/SKILL.md\`."
+  else
+    echo "the failure it prevents actually happened. Full text in \`.cursor/rules/<name>.mdc\`."
+  fi
   echo ""
   for s in "${installed[@]}"; do
     echo "- **$s** — $(fm "$SRC/$s/SKILL.md" description)"
@@ -128,5 +154,4 @@ rm -f "$section"
 
 echo ""
 echo "Refreshed ${#skills[@]} skill(s); ${#installed[@]} installed in total at $TARGET"
-echo "  Claude Code picks these up automatically; Cursor reads .cursor/rules/;"
-echo "  other tools read AGENTS.md."
+echo "  Cursor reads .cursor/rules/; other tools read AGENTS.md."
