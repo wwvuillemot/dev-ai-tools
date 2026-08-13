@@ -12,6 +12,10 @@ make update VERSION=v0.5.1
 
 ## [Unreleased]
 
+### Fixed
+- **`make install-skills ONLY=…` left the three surfaces disagreeing.** `ONLY` narrows which skills are written, but the `AGENTS.md` manifest was built from *this run's* selection rather than from what is on disk — so installing all five and then re-running with `ONLY=safe-actions` left five skills loaded for Claude Code and Cursor while telling Codex there was one. The manifest is now derived by scanning the target, so all three agree regardless of which subset a run touched. `ONLY` still never **removes** an installed skill; silently deleting one someone had come to rely on is the surprise `safe-actions` exists to argue against.
+
+
 ## [0.7.0] - 2026-08-13
 
 ### Added

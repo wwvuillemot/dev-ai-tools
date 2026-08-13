@@ -8,6 +8,10 @@
 #
 # Idempotent: re-running refreshes in place. The AGENTS.md section is delimited by markers, so
 # nothing you wrote there is ever touched.
+#
+# ONLY= narrows which skills are (re)written. It never REMOVES a skill that is already
+# installed — the AGENTS.md manifest is rebuilt from what is on disk, so all three surfaces
+# agree regardless of which subset this particular run touched.
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -73,6 +77,18 @@ for s in "${skills[@]}"; do
   echo "  [✓] $s.mdc"
 done
 
+# The AGENTS.md manifest must describe what is ON DISK, not what this run happened to write.
+# ONLY= narrows which skills are refreshed; it does NOT remove the others (deleting a skill someone
+# may have come to rely on is exactly the kind of surprise `safe-actions` argues against). So a
+# narrowed run previously left five skills installed for Claude while telling Codex there was one.
+# Scan the target instead, and list every skill of ours that is actually present.
+installed=()
+for d in "$SRC"/*/; do
+  name="$(basename "$d")"
+  [[ -f "$d/SKILL.md" ]] || continue
+  [[ -f "$TARGET/.claude/skills/$name/SKILL.md" ]] && installed+=("$name")
+done
+
 echo "── Codex / generic (AGENTS.md) ──────────────────────"
 agents="$TARGET/AGENTS.md"
 touch "$agents"
@@ -85,7 +101,7 @@ section="$(mktemp)"
   echo "Working habits that decide whether this agent's output is trustworthy. Each was written after"
   echo "the failure it prevents actually happened. Full text in \`.claude/skills/<name>/SKILL.md\`."
   echo ""
-  for s in "${skills[@]}"; do
+  for s in "${installed[@]}"; do
     echo "- **$s** — $(fm "$SRC/$s/SKILL.md" description)"
   done
   echo ""
@@ -111,6 +127,6 @@ fi
 rm -f "$section"
 
 echo ""
-echo "Installed ${#skills[@]} skill(s) into $TARGET"
+echo "Refreshed ${#skills[@]} skill(s); ${#installed[@]} installed in total at $TARGET"
 echo "  Claude Code picks these up automatically; Cursor reads .cursor/rules/;"
 echo "  other tools read AGENTS.md."
