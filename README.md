@@ -10,14 +10,21 @@ A curated bundle of CLI tools that improve the developer experience when working
 output is trustworthy — verification discipline, gates that can actually fail, an autonomy contract,
 destructive-action safety, and how to iterate on visual changes without burning rounds. Each was
 written after the failure it prevents actually happened. Install them into any repo, in each tool's
-native format:
+native format. In Claude Code it installs as a plugin from this repo's marketplace:
+
+```sh
+claude plugin marketplace add wwvuillemot/dev-ai-tools
+claude plugin install practices@dev-ai-tools
+```
+
+For Cursor, Codex, or any other tool, install the same skills into a repo directly:
 
 ```sh
 make install-skills DIR=~/Projects/my-repo
 ```
 
-Claude Code reads `.claude/skills/`, Cursor reads `.cursor/rules/`, everything else reads
-`AGENTS.md` — authored once, generated into all three. See [`skills/README.md`](./skills/README.md).
+Authored once; Cursor reads `.cursor/rules/`, everything else reads `AGENTS.md`. See
+[`plugins/practices/README.md`](./plugins/practices/README.md).
 
 **What's included:**
 

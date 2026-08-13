@@ -11,7 +11,7 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SRC="$REPO_DIR/skills"
+SRC="$REPO_DIR/plugins/practices/skills"
 TARGET="${1:-}"
 ONLY="${2:-}"
 

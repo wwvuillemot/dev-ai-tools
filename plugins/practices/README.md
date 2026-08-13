@@ -1,4 +1,16 @@
-# Practice skills
+# practices
+
+Claude Code plugin. Also installable into any repo for Cursor / Codex via `make install-skills`.
+
+## Install (Claude Code)
+
+```sh
+claude plugin marketplace add wwvuillemot/dev-ai-tools
+claude plugin install practices@dev-ai-tools
+```
+
+Updates arrive with `claude plugin update` — no clone, independent of `make setup`.
+
 
 The rest of this repo bundles **tools**. This bundles **practices** — the working habits that decide
 whether an agent's output is trustworthy.
@@ -20,11 +32,11 @@ generated into the other tools' formats by `make install-skills`:
 The markdown body is deliberately tool-agnostic: no Claude-specific tool names, no assumptions about
 a particular harness. A human reading these should get the same value an agent does.
 
-## Installing into a project
+## Installing into a project (Cursor / Codex / any tool)
 
 ```sh
-make install-skills PATH=~/Projects/my-repo          # all skills
-make install-skills PATH=~/Projects/my-repo ONLY=safe-actions,autonomy-contract
+make install-skills DIR=~/Projects/my-repo          # all skills
+make install-skills DIR=~/Projects/my-repo ONLY=safe-actions,autonomy-contract
 ```
 
 Idempotent: re-running updates in place. The `AGENTS.md` section is bounded by markers, so your own

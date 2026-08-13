@@ -5,14 +5,16 @@
     "url": "https://github.com/wwvuillemot"
   },
   "description": "Project-agnostic Claude Code plugins that improve the developer experience when working with AI coding agents. Companion to the CLI bundle installed by `make setup`.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "plugins": [
     {
       "name": "deep-review",
       "source": "./plugins/deep-review",
       "description": "Adversarial, lens-driven code review. Fans out finders across configurable lenses (correctness, design, performance, security, tenancy, governance, conventions, blast-radius), verifies every candidate by refutation, checks the change against the codebase's existing patterns, and delivers ranked findings as inline PR comments.",
       "version": "0.2.0",
-      "author": { "name": "Ward Vuillemot" },
+      "author": {
+        "name": "Ward Vuillemot"
+      },
       "category": "code-review",
       "keywords": [
         "code-review",
@@ -23,6 +25,25 @@
         "performance",
         "governance",
         "orchestrator"
+      ]
+    },
+    {
+      "name": "practices",
+      "source": "./plugins/practices",
+      "description": "Working habits that decide whether an agent's output is trustworthy: verify before asserting, gates that must be observed failing, an autonomy contract, destructive-action safety, and visual iteration that doesn't burn rounds. Each written after the failure it prevents actually happened.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Ward Vuillemot"
+      },
+      "category": "workflow",
+      "keywords": [
+        "practices",
+        "verification",
+        "testing",
+        "autonomy",
+        "safety",
+        "agent-discipline",
+        "code-quality"
       ]
     }
   ]
