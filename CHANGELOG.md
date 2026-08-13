@@ -13,6 +13,19 @@ make update VERSION=v0.5.1
 ## [Unreleased]
 
 ### Added
+- **`practices` plugin** (`plugins/practices/`, plugin `0.1.0`; marketplace `0.3.0`) — five skills covering the working habits that decide whether an agent's output is trustworthy. Each was written after the failure it prevents actually happened, so they read as "what went wrong" rather than "what good looks like":
+  - **`verify-before-asserting`** — run the check before claiming anything about the state of the world; re-read every value after writing it, because a `200 OK` can silently ignore a field; "accepted" is not "landed" in asynchronous systems; say **"unproven in the wild"** and mean it. When an observation seems impossible, distrust the stale process and the stale client before the code.
+  - **`gates-must-fail-first`** — never merge a new or changed test, lint rule or CI check without observing it FAIL. Covers why retrofit tests are born green, and the subtler case where a gate derives its scope from the artifact under test and is therefore structurally blind to omissions.
+  - **`autonomy-contract`** — how far to carry work before stopping. Names both failure modes, lists what always stops (spending, deleting, publishing, a genuine fork), and recommends writing the line down per project.
+  - **`safe-actions`** — never kill by name or port, never delete files you did not create, and every command handed to a human must run verbatim with no placeholders.
+  - **`visual-iteration`** — stop guessing after two attempts and find the real cause; diagnose from computed style, not the stylesheet; your preview pane is not their browser.
+- **`make install-skills DIR=<repo> [ONLY=a,b]`** — installs the same skills into any repo for tools that are not Claude Code: copied for Claude, frontmatter rewritten to `.cursor/rules/*.mdc` for Cursor, summarised into `AGENTS.md` between markers for Codex and everything else. Idempotent; existing `AGENTS.md` content is never touched.
+
+### Fixed
+- **`make setup-project PATH=…` never worked.** Assigning `PATH` on the make command line replaces the recipe's `PATH`, so the shell could not find `bash` and the target died with `env: bash: No such file or directory` — which reads like a broken install rather than a bad flag. `ifndef PATH` could not catch it either, because `PATH` is always defined by the environment, so omitting it passed the entire system `PATH` as the target directory. Both `setup-project` and `install-skills` now take **`DIR=`**, and a repo-level guard detects the `PATH=` override and says what to use instead.
+
+
+### Added
 - This repo is now also a **Claude Code plugin marketplace** (`.claude-plugin/marketplace.json`). Plugins install via `claude plugin marketplace add wwvuillemot/dev-ai-tools` and update via `claude plugin update` — independent of `make setup`/`make update`, and with no clone required.
 - **`deep-review` plugin** (`plugins/deep-review/`) — adversarial, lens-driven code review:
   - Configurable **lens registry** so a review can be aimed at a concern: `correctness`, `design` (SOLID/DRY/SRP/smells), `performance`, `security`, `tenancy`, `governance`, `conventions`, `blast-radius`. Lenses resolve from the built-in set, from any other installed plugin's `deep-review/lenses/`, and from `.claude/deep-review/lenses/` in the repo under review — later sources override by name, so orgs can ship private lenses without forking.
