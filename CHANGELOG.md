@@ -12,6 +12,8 @@ make update VERSION=v0.5.1
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-08-13
+
 ### Added
 - **`practices` plugin** (`plugins/practices/`, plugin `0.1.0`; marketplace `0.3.0`) — five skills covering the working habits that decide whether an agent's output is trustworthy. Each was written after the failure it prevents actually happened, so they read as "what went wrong" rather than "what good looks like":
   - **`verify-before-asserting`** — run the check before claiming anything about the state of the world; re-read every value after writing it, because a `200 OK` can silently ignore a field; "accepted" is not "landed" in asynchronous systems; say **"unproven in the wild"** and mean it. When an observation seems impossible, distrust the stale process and the stale client before the code.
@@ -148,7 +150,9 @@ make update VERSION=v0.5.1
 ### Changed
 - Troubleshooting section updated for the VS Code MCP deprecation warning.
 
-[Unreleased]: https://github.com/wwvuillemot/dev-ai-tools/compare/v0.5.4...HEAD
+[Unreleased]: https://github.com/wwvuillemot/dev-ai-tools/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/wwvuillemot/dev-ai-tools/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/wwvuillemot/dev-ai-tools/compare/v0.5.4...v0.6.0
 [0.5.4]: https://github.com/wwvuillemot/dev-ai-tools/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/wwvuillemot/dev-ai-tools/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/wwvuillemot/dev-ai-tools/compare/v0.5.1...v0.5.2
