@@ -95,7 +95,7 @@ Update with `claude plugin update`, independently of `make update`. The two inst
 | `make install-lsp` | Scan repos, detect languages, prompt per language to install servers |
 | `make install-cli` | Symlink `bin/dev-ai-tools` into `$DEV_AI_TOOLS_BIN` (default `~/.local/bin`) |
 | `make uninstall-cli` | Remove the `dev-ai-tools` symlink |
-| `make setup-projects` | Add `.serena/project.yml` to every project under `~/Projects` |
+| `make setup-projects` | Add `.serena/project.yml` to every project under your projects root |
 | `make setup-project DIR=…` | Add `.serena/project.yml` to one project |
 | `make update` | Update to latest on `main` and re-run `make setup` — pass `VERSION=<tag>` to pin to a release (e.g. `make update VERSION=v0.5.0`) |
 | `make check` | Verify Serena, Graphify, Backlog.md, and RTK are correctly wired in all detected clients |
@@ -104,7 +104,7 @@ Update with `claude plugin update`, independently of `make update`. The two inst
 | `make cache-clean` | Force `uvx` to re-download Serena on next use |
 | `make help` | Show all targets |
 
-`PROJECTS_ROOT` defaults to `~/Projects`; `DEV_AI_TOOLS_BIN` defaults to `~/.local/bin`. Override any target with:
+`PROJECTS_ROOT` is auto-detected — the first of `~/projects`, `~/Projects`, `~/dev`, `~/src`, `~/code`, `~/work` that exists; set it explicitly if your repos live elsewhere. `DEV_AI_TOOLS_BIN` defaults to `~/.local/bin`. Override any target with:
 
 ```bash
 make install-lsp PROJECTS_ROOT=/some/other/path
@@ -131,7 +131,7 @@ make install-cli DEV_AI_TOOLS_BIN=/usr/local/bin
 8. Installs **Graphify** (`uv tool install graphifyy`) and, for each detected client Graphify's CLI supports, prompts to run `graphify <client> install`
 9. Installs **Backlog.md** (`brew install backlog-md` on macOS when available, else `npm i -g backlog.md`) and, for each detected client, prompts to register its MCP server (`backlog mcp start`)
 10. Symlinks **`dev-ai-tools`** into `~/.local/bin` (override with `DEV_AI_TOOLS_BIN`) so per-project wiring works from any directory
-11. Runs `make install-lsp` — scans `~/Projects`, detects languages, and prompts per language to install servers
+11. Runs `make install-lsp` — scans your projects root, detects languages, and prompts per language to install servers
 
 Verify everything after setup:
 
@@ -145,7 +145,7 @@ make check
 
 `make install-lsp` (also called automatically by `make setup`):
 
-- Scans all repos under `~/Projects` for language indicators (`go.mod`, `Cargo.toml`, `tsconfig.json`, `*.py`, etc.) with a progress spinner
+- Scans all repos under your projects root (auto-detected, or `PROJECTS_ROOT=`) for language indicators (`go.mod`, `Cargo.toml`, `tsconfig.json`, `*.py`, etc.) with a progress spinner
 - Shows install status — already-installed and bundled servers are labelled
 - Prompts individually per language (`Install Go (gopls)? [Y/n]`)
 - Declining a language records it in `~/.serena/lsp-skip` so it won't be asked again (delete the file to re-prompt)
@@ -171,7 +171,7 @@ Supported languages: Go, Rust, Python (pyright), TypeScript/JS, Ruby, C/C++, C#/
 | `scripts/install-rtk.sh` | Installs/updates RTK (brew-or-curl) |
 | `scripts/install-language-servers.sh` | Interactive language server installer |
 | `scripts/setup-project.sh` | Creates `.serena/project.yml` in a single project |
-| `scripts/setup-all-projects.sh` | Runs `setup-project.sh` across every project under `~/Projects` |
+| `scripts/setup-all-projects.sh` | Runs `setup-project.sh` across every project under your projects root |
 
 Serena itself is **not** installed locally — it runs on demand via `uvx`.
 Graphify installs as a managed `uv` tool; Backlog.md installs as a native CLI (via brew or npm) and is wired in per-client as an MCP server; RTK installs as a native binary (via brew or the upstream installer).

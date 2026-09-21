@@ -1,9 +1,28 @@
 #!/usr/bin/env bash
-# setup-all-projects.sh — Run setup-project.sh for every subdirectory of ~/Projects.
-# Usage: setup-all-projects.sh [<root-dir>]  (defaults to ~/Projects)
+# setup-all-projects.sh — Run setup-project.sh for every subdirectory of your projects root.
+# Usage: setup-all-projects.sh [<root-dir>]
+#   root-dir  explicit root. When omitted, PROJECTS_ROOT from the environment is
+#             used; failing that, common locations are probed.
 set -euo pipefail
 
-PROJECTS_ROOT="${1:-$HOME/Projects}"
+# Precedence: explicit argument → PROJECTS_ROOT in the environment → probe.
+# NOTE: install-language-servers.sh carries the same candidate list — keep in sync.
+PROJECTS_ROOT="${1:-${PROJECTS_ROOT:-}}"
+if [[ -z "$PROJECTS_ROOT" ]]; then
+  for _candidate in "$HOME/projects" "$HOME/Projects" "$HOME/dev" "$HOME/src" "$HOME/code" "$HOME/work"; do
+    if [[ -d "$_candidate" ]]; then
+      PROJECTS_ROOT="$_candidate"
+      break
+    fi
+  done
+fi
+
+if [[ -z "$PROJECTS_ROOT" ]]; then
+  echo "Error: no projects root found. Re-run with an explicit path:"
+  echo "  make setup-projects PROJECTS_ROOT=/path/to/your/repos"
+  exit 1
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SETUP_SCRIPT="$SCRIPT_DIR/setup-project.sh"
 

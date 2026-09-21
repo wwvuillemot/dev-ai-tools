@@ -1,6 +1,9 @@
 SHELL := /usr/bin/env bash
 REPO_DIR := $(shell pwd)
-PROJECTS_ROOT ?= $(HOME)/Projects
+# Left empty on purpose: the scripts resolve the root themselves (explicit arg →
+# $PROJECTS_ROOT → probe ~/projects, ~/Projects, ~/dev, ~/src, ~/code, ~/work).
+# A default here would override that probe and hardcode one spelling.
+PROJECTS_ROOT ?=
 DEV_AI_TOOLS_BIN ?= $(HOME)/.local/bin
 
 .DEFAULT_GOAL := help
@@ -21,7 +24,7 @@ setup: ## Bootstrap dev-ai-tools (Serena, Graphify, Backlog.md, RTK) — wires M
 	@bash $(REPO_DIR)/install.sh
 
 .PHONY: setup-projects
-setup-projects: ## Add .serena/project.yml to every project under ~/Projects
+setup-projects: ## Add .serena/project.yml to every project under your projects root (auto-detected, or PROJECTS_ROOT=)
 	@bash $(REPO_DIR)/scripts/setup-all-projects.sh $(PROJECTS_ROOT)
 
 .PHONY: setup-project
@@ -302,7 +305,7 @@ help: ## Show this help
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "  %-20s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 	@echo
 	@echo "Variables:"
-	@echo "  PROJECTS_ROOT      Root directory scanned by setup-projects (default: ~/Projects)"
+	@echo "  PROJECTS_ROOT      Root scanned by setup-projects and install-lsp (default: auto-detected)"
 	@echo "  PATH               Project path for setup-project target"
 	@echo "  DEV_AI_TOOLS_BIN   Where install-cli symlinks the wrapper (default: ~/.local/bin)"
 	@echo "  VERSION            Git tag to check out for 'make update' (default: latest on main)"
