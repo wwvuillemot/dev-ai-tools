@@ -131,7 +131,7 @@ Update with `claude plugin update`, independently of `make update`. The two inst
 | `make cache-clean` | Force `uvx` to re-download Serena on next use |
 | `make help` | Show all targets |
 
-`PROJECTS_ROOT` is auto-detected — the first of `~/projects`, `~/Projects`, `~/dev`, `~/src`, `~/code`, `~/work` that exists; set it explicitly if your repos live elsewhere. `DEV_AI_TOOLS_BIN` defaults to `~/.local/bin`. Override any target with:
+`PROJECTS_ROOT` is auto-detected — the first of `~/Projects`, `~/projects`, `~/dev`, `~/src`, `~/code`, `~/work` that exists; set it explicitly if your repos live elsewhere. `DEV_AI_TOOLS_BIN` defaults to `~/.local/bin`. Override any target with:
 
 ```bash
 make install-lsp PROJECTS_ROOT=/some/other/path
@@ -254,7 +254,7 @@ make setup
 Each project can have a `.serena/project.yml` for overrides and a `.serena/memories/` folder for Serena's persistent notes about that codebase.
 
 ```bash
-# All projects under ~/Projects at once
+# All projects under your projects root at once
 make setup-projects
 
 # One project

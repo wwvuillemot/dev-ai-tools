@@ -9,7 +9,8 @@ set -euo pipefail
 # NOTE: install-language-servers.sh carries the same candidate list — keep in sync.
 PROJECTS_ROOT="${1:-${PROJECTS_ROOT:-}}"
 if [[ -z "$PROJECTS_ROOT" ]]; then
-  for _candidate in "$HOME/projects" "$HOME/Projects" "$HOME/dev" "$HOME/src" "$HOME/code" "$HOME/work"; do
+  # $HOME/Projects leads — see install-language-servers.sh for why.
+  for _candidate in "$HOME/Projects" "$HOME/projects" "$HOME/dev" "$HOME/src" "$HOME/code" "$HOME/work"; do
     if [[ -d "$_candidate" ]]; then
       PROJECTS_ROOT="$_candidate"
       break

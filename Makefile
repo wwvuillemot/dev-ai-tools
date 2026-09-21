@@ -1,7 +1,7 @@
 SHELL := /usr/bin/env bash
 REPO_DIR := $(shell pwd)
 # Left empty on purpose: the scripts resolve the root themselves (explicit arg →
-# $PROJECTS_ROOT → probe ~/projects, ~/Projects, ~/dev, ~/src, ~/code, ~/work).
+# $PROJECTS_ROOT → probe ~/Projects, ~/projects, ~/dev, ~/src, ~/code, ~/work).
 # A default here would override that probe and hardcode one spelling.
 PROJECTS_ROOT ?=
 DEV_AI_TOOLS_BIN ?= $(HOME)/.local/bin

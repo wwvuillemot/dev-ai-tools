@@ -29,8 +29,11 @@ mark_skipped() { mkdir -p "$(dirname "$LSP_SKIP_FILE")"; echo "$1" >> "$LSP_SKIP
 # old default ($HOME/Projects) failed the other way — on a case-sensitive
 # filesystem it simply found nothing, and the scan reported "no languages".
 # NOTE: setup-all-projects.sh carries the same candidate list — keep them in sync.
+# $HOME/Projects leads: it was this tool's documented default before the probe
+# existed, so a user who has both spellings on a case-sensitive filesystem keeps
+# resolving to the one they were already told to use.
 PROJECTS_ROOT_CANDIDATES=(
-  "$HOME/projects" "$HOME/Projects" "$HOME/dev" "$HOME/src" "$HOME/code" "$HOME/work"
+  "$HOME/Projects" "$HOME/projects" "$HOME/dev" "$HOME/src" "$HOME/code" "$HOME/work"
 )
 
 _root_was_explicit=0
@@ -127,14 +130,26 @@ trim() { local s="$1"; s="${s#"${s%%[![:space:]]*}"}"; s="${s%"${s##*[![:space:]
 #     above turns the resulting SIGPIPE into exit 141, and `set -e` then kills the
 #     scan mid-run. `sed` and `sort` drain the stream, so this pipeline is safe.
 #
+# `-type l` alongside `-type f` keeps parity with the old `-name` test, which had
+# no type filter: a repo whose only marker is a symlink (an ansible.cfg linked in
+# from elsewhere) must still register. `LC_ALL=C` because glibc collation treats
+# basenames differing only by punctuation as equal, so `sort -u` under en_US.UTF-8
+# will drop `go.mod` when a sibling `go mod` sorts first.
+#
 # Paths are reduced to deduplicated basenames so the match loop stays cheap.
 ALL_NAMES="$(find "$PROJECTS_ROOT" -maxdepth 5 \
   \( -path "*/node_modules/*" -o -path "*/.git/*" -o -path "*/.venv/*" \) -prune \
-  -o -type f -print 2>/dev/null | sed 's|.*/||' | sort -u || true)"
+  -o \( -type f -o -type l \) -print 2>/dev/null | sed 's|.*/||' | LC_ALL=C sort -u || true)"
 
 detect_language() {
   local globs="$1" glob name
-  for glob in $globs; do
+  local -a glob_list
+  # `read -ra`, not `for glob in $globs`: an unquoted expansion is pathname-expanded
+  # against the CALLER's cwd, so run from the repo root the glob `*.sh` silently
+  # became the literal `install.sh` and Bash detection looked for that filename.
+  # read performs word splitting without pathname expansion.
+  read -ra glob_list <<< "$globs"
+  for glob in "${glob_list[@]}"; do
     while IFS= read -r name; do
       # shellcheck disable=SC2053  # unquoted $glob is the point: same match semantics as find -name
       if [[ "$name" == $glob ]]; then return 0; fi
