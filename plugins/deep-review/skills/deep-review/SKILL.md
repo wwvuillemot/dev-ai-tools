@@ -52,6 +52,32 @@ Establish, with commands and not assumption:
 - The repo's own instructions — root `CLAUDE.md`/`AGENTS.md` plus any in touched directories. These bind the `conventions` lens.
 - Which lenses are active and why.
 
+> **Never change the checkout — read refs, do not switch to them.** The target is usually a branch
+> or PR that is not current, and the working tree is frequently **not yours**: another agent or a
+> person may be mid-edit in it, with uncommitted work and a branch they expect to still be on.
+> Checking out the branch under review yanks the tree out from under them — observed in the wild,
+> where HEAD moved to a detached `origin/<branch>` and the file a working agent was editing ceased
+> to exist mid-write.
+>
+> A reviewer never needs a working tree. Everything is reachable read-only:
+>
+> ```bash
+> gh pr diff <N>              # the whole diff for a PR
+> gh pr view <N> --json ...   # its metadata, title, body
+> git diff <base>...<ref>     # a branch against its merge base
+> git show <ref>:<path>       # any file's contents at any ref
+> git log <base>..<ref>       # the commits and their messages
+> ```
+>
+> `git fetch origin` first so the refs exist locally — fetching is safe, switching is not. If you
+> genuinely need a populated tree (a build, a test run, a tool that only walks the filesystem),
+> create an isolated one with `git worktree add`, or launch the agent with `isolation: "worktree"`,
+> and remove it afterwards. Never `git checkout`, `git switch`, `git stash`, `git restore`,
+> `git reset` or `git clean` in the user's checkout.
+>
+> The same applies to the finder and verifier subagents: they inherit the working directory, so one
+> of them switching branches corrupts every other agent's view mid-run.
+
 State the scope in one line before fanning out: files, lines, lenses, depth. If the diff is empty, stop and say so.
 
 ## Phase 2 — Find (parallel, per lens)
