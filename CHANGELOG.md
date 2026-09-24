@@ -12,6 +12,9 @@ make update VERSION=v0.5.1
 
 ## [Unreleased]
 
+### Changed
+- **`deep-review` posts to the PR by default when the target is a PR.** `/deep-review <PR#>` (or a PR URL) now delivers findings as one batched inline review without asking, and the chat reply shrinks to the verdict, comment count, and review link instead of repeating every finding. Use `--no-post` to keep a PR review in chat. Non-PR targets are unchanged: chat report unless `--post`. Reviews are submitted as `COMMENT`, clean reviews still get a body-only review so the PR shows it was looked at, and a failed post falls back to the full chat report.
+
 ### Fixed
 - **`make install-skills ONLY=…` left the three surfaces disagreeing.** `ONLY` narrows which skills are written, but the `AGENTS.md` manifest was built from *this run's* selection rather than from what is on disk — so installing all five and then re-running with `ONLY=safe-actions` left five skills loaded for Claude Code and Cursor while telling Codex there was one. The manifest is now derived by scanning the target, so all three agree regardless of which subset a run touched. `ONLY` still never **removes** an installed skill; silently deleting one someone had come to rely on is the surprise `safe-actions` exists to argue against.
 

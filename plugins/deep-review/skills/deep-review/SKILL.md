@@ -22,13 +22,13 @@ A review harness with three commitments that ordinary review lacks:
 ## Invocation
 
 ```
-/deep-review [target] [--lens <names>] [--depth quick|standard|deep] [--post]
+/deep-review [target] [--lens <names>] [--depth quick|standard|deep] [--post | --no-post]
 ```
 
 - **target** — omitted: the working diff vs. the merge base. `<PR#>` or a PR URL: that pull request. `<branch>`: that branch vs. its base.
 - **--lens** — comma-separated lens names, or `all`. Default: `correctness,design,conventions,blast-radius`.
 - **--depth** — `quick` (1 finder/lens, 1 verifier), `standard` (2 finders/lens, 3 verifiers), `deep` (3 finders/lens, 3 verifiers + sweep). Default `standard`.
-- **--post** — deliver as inline PR comments. Without it, report in chat only.
+- **--post / --no-post** — where the findings go. A PR target **posts to the PR by default**; `--no-post` keeps it in chat. Any other target reports in chat unless `--post` is given, which posts to that branch's open PR.
 
 If the user's request names a concern ("check this for N+1s", "is this a security risk"), map it to lenses and say which you selected before running.
 
@@ -125,16 +125,35 @@ If you cap, **say what you dropped and why**. A silent cap reads as "that's ever
 
 ## Phase 6 — Deliver
 
-Default is a chat report: verdict, ranked findings with evidence, and what was checked but found clean (that last part is what makes a clean review trustworthy).
+Where the findings go is decided by the target, not by asking:
 
-With `--post`, deliver to the pull request:
+- **PR target** (`<PR#>` or a PR URL) — post to the pull request. **Do not ask first**: naming a PR is the request to post there. Only `--no-post` overrides this.
+- **Any other target** — chat report, unless `--post` was given.
 
-- **Line-level comments on the specific lines**, batched into **one** review via the reviews API — not a stream of individual comments, and not one giant summary comment. A finding about a line belongs on that line, where it can be resolved individually.
+### Posting to the PR
+
+- **Line-level comments on the specific lines**, batched into **one** review via the reviews API — not a stream of individual comments, and not one giant summary comment. A finding about a line belongs on that line, where it can be resolved individually. `gh pr review` cannot anchor comments to lines; use the API:
+
+  ```bash
+  gh api repos/{owner}/{repo}/pulls/<N>/reviews --input review.json
+  # review.json: {"commit_id": "<head sha>", "event": "COMMENT", "body": "...",
+  #               "comments": [{"path": "...", "line": 42, "side": "RIGHT", "body": "..."}]}
+  ```
+
+  Write `review.json` to a scratch directory, never into the checkout. Submit as `COMMENT` — the review informs; approving or blocking stays the human's call.
+- A finding whose line is **not inside a diff hunk** goes in the review body instead. The API rejects the entire review if a single comment is anchored outside the diff.
 - Where a review thread already exists on that line, **reply in the thread** rather than opening a duplicate.
-- Reserve the review body for what is genuinely global: the verdict, cross-cutting patterns, and the coverage note.
+- The review body carries everything global: the verdict, cross-cutting patterns, the coverage note (lenses run, lenses skipped and why), what the cap dropped, and what was checked and found clean.
+- **Zero surviving findings still gets posted** — a body-only review with the verdict and the coverage note. No review on the PR reads as "not reviewed," not as "clean."
 - **Never resolve threads yourself.** Fix-and-reply, then leave them open for the human to resolve.
 
-Ask before posting unless the invocation already said `--post`.
+After posting, the chat reply is **only** the verdict in one line, the number of comments posted, and the review URL. Do not restate the findings in chat — the PR is the report, and a second copy drifts from the one people actually resolve.
+
+If posting fails (`gh` unauthenticated, no write access, API error), say so with the error and fall back to the full chat report below, so the findings are not lost.
+
+### Chat report
+
+Verdict, ranked findings with evidence, and what was checked but found clean (that last part is what makes a clean review trustworthy).
 
 ## Honesty rules
 

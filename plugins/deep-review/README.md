@@ -17,15 +17,16 @@ Then `/plugin install deep-review`.
 ```
 /deep-review                                   # working diff, default lenses
 /deep-review --lens design,performance         # target specific concerns
-/deep-review 1909 --lens security,tenancy      # a pull request
-/deep-review --depth deep --post               # full fan-out, post inline comments
+/deep-review 1909 --lens security,tenancy      # a pull request — findings post to the PR
+/deep-review 1909 --no-post                    # a pull request, report in chat instead
+/deep-review --depth deep --post               # full fan-out, post to this branch's PR
 ```
 
 | Flag | Values | Default |
 |---|---|---|
 | `--lens` | any registered lens name, or `all` | `correctness,design,conventions,blast-radius` |
 | `--depth` | `quick`, `standard`, `deep` | `standard` |
-| `--post` | deliver as batched inline PR comments | off (chat report) |
+| `--post` / `--no-post` | batched inline PR comments, or a chat report | posts for a PR target; chat report otherwise |
 
 ## Built-in lenses
 
@@ -49,7 +50,7 @@ Then `/plugin install deep-review`.
 3. **Pool** — dedupe by location; a finding raised by two lenses independently is stronger.
 4. **Refute** — verifiers prompted to kill each candidate, defaulting to refuted when uncertain. At `standard` and above they're given *different* perspectives, because three identical skeptics are one skeptic with variance.
 5. **Rank** — correctness outranks everything else when the cap forces a cut, and anything dropped is named rather than silently truncated.
-6. **Deliver** — line-level comments batched into one review; existing threads get replies rather than duplicates; threads are never self-resolved.
+6. **Deliver** — for a PR, line-level comments batched into one review, posted without asking; the chat gets only the verdict and a link. Existing threads get replies rather than duplicates; threads are never self-resolved.
 
 ## Extending
 
@@ -59,7 +60,7 @@ That third path is how an org distributes proprietary lenses privately while sti
 
 ## Requirements
 
-Claude Code with subagent support. The `--post` path needs `gh` authenticated against the target repository.
+Claude Code with subagent support. Posting to a PR needs `gh` authenticated against the target repository; if it fails, the review falls back to a chat report.
 
 ## Relationship to the built-in reviewers
 
