@@ -50,7 +50,7 @@ Then `/plugin install deep-review`.
 3. **Pool** — dedupe by location; a finding raised by two lenses independently is stronger.
 4. **Refute** — verifiers prompted to kill each candidate, defaulting to refuted when uncertain. At `standard` and above they're given *different* perspectives, because three identical skeptics are one skeptic with variance.
 5. **Rank** — correctness outranks everything else when the cap forces a cut, and anything dropped is named rather than silently truncated.
-6. **Deliver** — for a PR, line-level comments batched into one review, posted without asking; the chat gets only the verdict and a link. Existing threads get replies rather than duplicates; threads are never self-resolved.
+6. **Deliver** — for a PR, line-level comments batched into one review, posted without asking; the chat gets only the verdict, the comment count, and a link. Existing threads get replies rather than duplicates; threads are never self-resolved.
 
 ## Extending
 
