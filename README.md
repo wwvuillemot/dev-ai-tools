@@ -6,7 +6,7 @@
 
 A curated bundle of CLI tools that improve the developer experience when working with AI coding agents. One idempotent `make setup` installs and wires each, across macOS, Linux, and WSL.
 
-**Practices, not just tools.** `skills/` bundles the working habits that decide whether an agent's
+**Practices, not just tools.** [`plugins/practices/`](./plugins/practices/) bundles the working habits that decide whether an agent's
 output is trustworthy — verification discipline, gates that can actually fail, an autonomy contract,
 destructive-action safety, and how to iterate on visual changes without burning rounds. Each was
 written after the failure it prevents actually happened. Install them into any repo, in each tool's
@@ -16,6 +16,9 @@ native format. In Claude Code it installs as a plugin from this repo's marketpla
 claude plugin marketplace add wwvuillemot/dev-ai-tools
 claude plugin install practices@dev-ai-tools
 ```
+
+That installs the `practices` plugin only. This repo publishes **two** plugins, each installed by its
+own command — see [Claude Code plugins](#claude-code-plugins) for how to install all of them.
 
 For Cursor, Codex, or any other tool, install the same skills into a repo directly. This
 **deliberately skips Claude Code** — the plugin above already serves it, and writing both would make
@@ -35,8 +38,9 @@ Authored once; Cursor reads `.cursor/rules/`, everything else reads `AGENTS.md`.
 - **[Backlog.md](https://backlog.md)** — a git-native task/spec/review layer for human+AI collaboration. Tasks are plain markdown files in your repo (no database); an MCP server lets agents create, plan, and finalize work with review checkpoints before code exists.
 - **[RTK](https://github.com/rtk-ai/rtk)** — "Rust Token Killer," a CLI proxy that filters and compresses command output to cut LLM token usage by 60–90% on common dev commands.
 
-**Claude Code plugins** (installed separately from `make setup` — see [Claude Code plugins](#claude-code-plugins)):
+**Claude Code plugins** (each installed separately from `make setup`, and from each other — see [Claude Code plugins](#claude-code-plugins)):
 
+- **[practices](./plugins/practices/)** — five skills covering the working habits that decide whether an agent's output is trustworthy: verify before asserting, gates that must be observed failing, an autonomy contract, destructive-action safety, and visual iteration that doesn't burn rounds.
 - **[deep-review](./plugins/deep-review/)** — adversarial, lens-driven code review. Aims the review at what you care about (SOLID/DRY, performance, security, tenancy, governance), verifies every candidate finding by refutation, checks the change against the codebase's existing patterns, and posts inline PR comments.
 
 > 👉 **[USING.md](./USING.md)** — practical guide for verifying and leveraging each tool in an AI-coding session.
@@ -58,15 +62,38 @@ This repo is also a Claude Code plugin marketplace. The plugins are **not** inst
 claude plugin marketplace add wwvuillemot/dev-ai-tools
 ```
 
-Then install what you want:
+Then install each plugin you want. **To get everything in this repo, run both commands:**
 
 ```bash
-claude plugin install deep-review
+claude plugin install practices@dev-ai-tools
+claude plugin install deep-review@dev-ai-tools
 ```
 
-| Plugin | What it does |
-|---|---|
-| [deep-review](./plugins/deep-review/) | Adversarial, lens-driven code review with configurable lenses, refutation-based verification, codebase-pattern awareness, and inline PR delivery. |
+| Plugin | Skills it adds | What it does |
+|---|---|---|
+| [practices](./plugins/practices/) | `verify-before-asserting`, `gates-must-fail-first`, `autonomy-contract`, `safe-actions`, `visual-iteration` | Working habits that decide whether an agent's output is trustworthy. Each written after the failure it prevents actually happened. |
+| [deep-review](./plugins/deep-review/) | `deep-review` | Adversarial, lens-driven code review with configurable lenses, refutation-based verification, codebase-pattern awareness, and inline PR delivery. |
+
+Three things that are easy to get wrong:
+
+- **One plugin per command.** `claude plugin install practices@dev-ai-tools deep-review@dev-ai-tools`
+  exits 0 and looks like it worked, but installs only the first — extra arguments are ignored with no
+  warning. Installing `practices` does **not** bring in `deep-review`; they are separate plugins.
+- **Restart Claude Code afterwards.** Plugins load at session start, so a session that was already
+  running when you installed them will not see the new skills. This is the usual reason a skill
+  "doesn't show up" right after a successful install.
+- **Skills are namespaced by plugin** once loaded — they appear as `practices:safe-actions`,
+  `deep-review:deep-review`, and so on, not as bare names.
+
+Confirm what actually landed, at any time:
+
+```bash
+claude plugin list          # installed plugins, scope, and enabled/disabled
+claude plugin marketplace list
+```
+
+Both should be non-empty after the commands above; if `claude plugin list` reports "No plugins
+installed," the install did not take effect and re-running it will show why.
 
 Update with `claude plugin update`, independently of `make update`. The two install paths are deliberately separate: `make setup` wires CLI tools and MCP servers into your machine, while plugins are content Claude Code loads directly.
 
@@ -95,7 +122,7 @@ Update with `claude plugin update`, independently of `make update`. The two inst
 | `make install-lsp` | Scan repos, detect languages, prompt per language to install servers |
 | `make install-cli` | Symlink `bin/dev-ai-tools` into `$DEV_AI_TOOLS_BIN` (default `~/.local/bin`) |
 | `make uninstall-cli` | Remove the `dev-ai-tools` symlink |
-| `make setup-projects` | Add `.serena/project.yml` to every project under `~/Projects` |
+| `make setup-projects` | Add `.serena/project.yml` to every project under your projects root |
 | `make setup-project DIR=…` | Add `.serena/project.yml` to one project |
 | `make update` | Update to latest on `main` and re-run `make setup` — pass `VERSION=<tag>` to pin to a release (e.g. `make update VERSION=v0.5.0`) |
 | `make check` | Verify Serena, Graphify, Backlog.md, and RTK are correctly wired in all detected clients |
@@ -104,7 +131,7 @@ Update with `claude plugin update`, independently of `make update`. The two inst
 | `make cache-clean` | Force `uvx` to re-download Serena on next use |
 | `make help` | Show all targets |
 
-`PROJECTS_ROOT` defaults to `~/Projects`; `DEV_AI_TOOLS_BIN` defaults to `~/.local/bin`. Override any target with:
+`PROJECTS_ROOT` is auto-detected — the first of `~/Projects`, `~/projects`, `~/dev`, `~/src`, `~/code`, `~/work` that exists; set it explicitly if your repos live elsewhere. `DEV_AI_TOOLS_BIN` defaults to `~/.local/bin`. Override any target with:
 
 ```bash
 make install-lsp PROJECTS_ROOT=/some/other/path
@@ -131,7 +158,7 @@ make install-cli DEV_AI_TOOLS_BIN=/usr/local/bin
 8. Installs **Graphify** (`uv tool install graphifyy`) and, for each detected client Graphify's CLI supports, prompts to run `graphify <client> install`
 9. Installs **Backlog.md** (`brew install backlog-md` on macOS when available, else `npm i -g backlog.md`) and, for each detected client, prompts to register its MCP server (`backlog mcp start`)
 10. Symlinks **`dev-ai-tools`** into `~/.local/bin` (override with `DEV_AI_TOOLS_BIN`) so per-project wiring works from any directory
-11. Runs `make install-lsp` — scans `~/Projects`, detects languages, and prompts per language to install servers
+11. Runs `make install-lsp` — scans your projects root, detects languages, and prompts per language to install servers
 
 Verify everything after setup:
 
@@ -145,7 +172,7 @@ make check
 
 `make install-lsp` (also called automatically by `make setup`):
 
-- Scans all repos under `~/Projects` for language indicators (`go.mod`, `Cargo.toml`, `tsconfig.json`, `*.py`, etc.) with a progress spinner
+- Scans all repos under your projects root (auto-detected, or `PROJECTS_ROOT=`) for language indicators (`go.mod`, `Cargo.toml`, `tsconfig.json`, `*.py`, etc.) with a progress spinner
 - Shows install status — already-installed and bundled servers are labelled
 - Prompts individually per language (`Install Go (gopls)? [Y/n]`)
 - Declining a language records it in `~/.serena/lsp-skip` so it won't be asked again (delete the file to re-prompt)
@@ -171,7 +198,7 @@ Supported languages: Go, Rust, Python (pyright), TypeScript/JS, Ruby, C/C++, C#/
 | `scripts/install-rtk.sh` | Installs/updates RTK (brew-or-curl) |
 | `scripts/install-language-servers.sh` | Interactive language server installer |
 | `scripts/setup-project.sh` | Creates `.serena/project.yml` in a single project |
-| `scripts/setup-all-projects.sh` | Runs `setup-project.sh` across every project under `~/Projects` |
+| `scripts/setup-all-projects.sh` | Runs `setup-project.sh` across every project under your projects root |
 
 Serena itself is **not** installed locally — it runs on demand via `uvx`.
 Graphify installs as a managed `uv` tool; Backlog.md installs as a native CLI (via brew or npm) and is wired in per-client as an MCP server; RTK installs as a native binary (via brew or the upstream installer).
@@ -227,7 +254,7 @@ make setup
 Each project can have a `.serena/project.yml` for overrides and a `.serena/memories/` folder for Serena's persistent notes about that codebase.
 
 ```bash
-# All projects under ~/Projects at once
+# All projects under your projects root at once
 make setup-projects
 
 # One project

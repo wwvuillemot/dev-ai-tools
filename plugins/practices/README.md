@@ -9,6 +9,12 @@ claude plugin marketplace add wwvuillemot/dev-ai-tools
 claude plugin install practices@dev-ai-tools
 ```
 
+Restart Claude Code afterwards — plugins load at session start.
+
+This installs `practices` only. The marketplace also publishes
+[deep-review](../deep-review/), installed by its own command; see the
+[repo README](../../README.md#claude-code-plugins).
+
 Updates arrive with `claude plugin update` — no clone, independent of `make setup`.
 
 

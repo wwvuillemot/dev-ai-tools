@@ -590,5 +590,9 @@ echo
 echo "  (You can run 'make install-lsp' at any time to install or update language servers.)"
 echo
 if [[ "$_lsp_answer" =~ ^[Yy] ]]; then
-  bash "$REPO_DIR/scripts/install-language-servers.sh"
+  # Forward an explicit root when the caller set one. An empty argument makes the
+  # script fall back to $PROJECTS_ROOT and then to probing common locations —
+  # previously it received nothing and hardcoded $HOME/Projects, which on a
+  # case-sensitive filesystem meant it scanned a directory that did not exist.
+  bash "$REPO_DIR/scripts/install-language-servers.sh" "${PROJECTS_ROOT:-}"
 fi
