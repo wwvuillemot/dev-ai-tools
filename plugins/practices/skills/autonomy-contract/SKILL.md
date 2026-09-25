@@ -37,7 +37,10 @@ Regardless of enthusiasm:
 - **Spending money**, or raising a cap on money that can be spent
 - **Deleting or overwriting** data that isn't reproducible — files you did not create, especially
   credentials
-- **Publishing outward** — sending mail, posting publicly, submitting to a review queue
+- **Publishing outward without a gate** — sending mail, posting publicly, submitting to a
+  review queue. Naming the destination in the request *is* the gate: "review PR 1909"
+  authorises posting there, and asking again is the stopping-too-early failure above.
+  Without that, stop — a standing autonomy line (below) is the other way to grant it.
 - **A genuine fork** where the options lead to materially different work and you cannot pick from the
   request, the code, or an obvious default
 
