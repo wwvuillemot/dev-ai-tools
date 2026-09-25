@@ -12,6 +12,9 @@ make update VERSION=v0.5.1
 
 ## [Unreleased]
 
+### Added
+- **CI now fails if the `deep-review` checkout rule drifts between agent definitions.** The "target is a commit, not the working tree" block is duplicated verbatim in all three `plugins/deep-review/agents/*.md`, because subagents never read `SKILL.md` — and nothing kept the copies in step. `scripts/check-agent-rule-parity.sh` extracts the block from each and fails the build when they differ, so adding a newly-banned command to one copy and forgetting the others is caught rather than leaving that agent silently under the weaker rule.
+
 ### Changed
 - **`deep-review` (plugin `0.3.0`) posts to the PR by default when the target is a PR.** `/deep-review <PR#>` (or a PR URL) now delivers findings as one batched inline review without asking, and the chat reply shrinks to the verdict, comment count, and review link instead of repeating every finding. Use `--no-post` to keep a PR review in chat. Non-PR targets are unchanged: chat report unless `--post`. Reviews are submitted as `COMMENT`, clean reviews still get a body-only review so the PR shows it was looked at, and a failed post falls back to the full chat report. Replies into existing threads use the separate replies endpoint, and `--post` on a branch finds its PR with `gh pr list --head`, falling back to chat when there is none or several.
 
