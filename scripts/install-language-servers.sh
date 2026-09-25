@@ -4,11 +4,12 @@
 # corresponding Serena language servers.
 #
 # Usage: install-language-servers.sh [projects-root]
-#   projects-root  defaults to ~/Projects
+#   projects-root  explicit root to scan. When omitted, PROJECTS_ROOT from the
+#                  environment is used; failing that, common locations are probed.
 
 set -eo pipefail
 
-PROJECTS_ROOT="${1:-$HOME/Projects}"
+PROJECTS_ROOT="${1:-${PROJECTS_ROOT:-}}"
 SERENA_HOME="${SERENA_HOME:-$HOME/.serena}"
 LSP_SKIP_FILE="$SERENA_HOME/lsp-skip"
 
@@ -20,6 +21,45 @@ section() { echo; echo "── $* ───────────────�
 
 is_skipped() { [[ -f "$LSP_SKIP_FILE" ]] && grep -qx "$1" "$LSP_SKIP_FILE"; }
 mark_skipped() { mkdir -p "$(dirname "$LSP_SKIP_FILE")"; echo "$1" >> "$LSP_SKIP_FILE"; }
+
+# ── Resolve the projects root ─────────────────────────────────────────────────
+# Precedence: explicit argument → PROJECTS_ROOT in the environment → probe.
+# An explicit root is never second-guessed: if it does not exist we say so and
+# stop, rather than silently scanning somewhere the caller never asked for. The
+# old default ($HOME/Projects) failed the other way — on a case-sensitive
+# filesystem it simply found nothing, and the scan reported "no languages".
+# NOTE: setup-all-projects.sh carries the same candidate list — keep them in sync.
+# $HOME/Projects leads: it was this tool's documented default before the probe
+# existed, so a user who has both spellings on a case-sensitive filesystem keeps
+# resolving to the one they were already told to use.
+PROJECTS_ROOT_CANDIDATES=(
+  "$HOME/Projects" "$HOME/projects" "$HOME/dev" "$HOME/src" "$HOME/code" "$HOME/work"
+)
+
+_root_was_explicit=0
+if [[ -n "$PROJECTS_ROOT" ]]; then
+  _root_was_explicit=1
+else
+  for _candidate in "${PROJECTS_ROOT_CANDIDATES[@]}"; do
+    if [[ -d "$_candidate" ]]; then
+      PROJECTS_ROOT="$_candidate"
+      break
+    fi
+  done
+fi
+
+if [[ -z "$PROJECTS_ROOT" || ! -d "$PROJECTS_ROOT" ]]; then
+  echo
+  if [[ "$_root_was_explicit" -eq 1 ]]; then
+    warn "Projects root does not exist: $PROJECTS_ROOT"
+  else
+    warn "No projects root found — looked in: ${PROJECTS_ROOT_CANDIDATES[*]}"
+  fi
+  info "Language server scan skipped. Re-run with an explicit path:"
+  info "  make install-lsp PROJECTS_ROOT=/path/to/your/repos"
+  echo
+  exit 0
+fi
 
 detect_os() {
   if [[ "$(uname)" == "Darwin" ]]; then echo "macos"
@@ -79,12 +119,41 @@ section "Scanning $PROJECTS_ROOT"
 
 trim() { local s="$1"; s="${s#"${s%%[![:space:]]*}"}"; s="${s%"${s##*[![:space:]]}"}"; echo "$s"; }
 
+# One tree walk for every language, not one per glob — the previous form re-walked
+# the tree once per glob (~24 languages x their globs). Two portability rules
+# shape this, and both were violated by the old one-liner:
+#
+#   * No `-quit`. It is a GNU findutils primary; BSD find (macOS) rejects it as
+#     an unknown operator, and with stderr suppressed that failure is invisible —
+#     find exits non-zero and EVERY language silently goes undetected.
+#   * No pipe into an early-exit reader (`grep -q`, `head -1`). `set -o pipefail`
+#     above turns the resulting SIGPIPE into exit 141, and `set -e` then kills the
+#     scan mid-run. `sed` and `sort` drain the stream, so this pipeline is safe.
+#
+# `-type l` alongside `-type f` keeps parity with the old `-name` test, which had
+# no type filter: a repo whose only marker is a symlink (an ansible.cfg linked in
+# from elsewhere) must still register. `LC_ALL=C` because glibc collation treats
+# basenames differing only by punctuation as equal, so `sort -u` under en_US.UTF-8
+# will drop `go.mod` when a sibling `go mod` sorts first.
+#
+# Paths are reduced to deduplicated basenames so the match loop stays cheap.
+ALL_NAMES="$(find "$PROJECTS_ROOT" -maxdepth 5 \
+  \( -path "*/node_modules/*" -o -path "*/.git/*" -o -path "*/.venv/*" \) -prune \
+  -o \( -type f -o -type l \) -print 2>/dev/null | sed 's|.*/||' | LC_ALL=C sort -u || true)"
+
 detect_language() {
-  local globs="$1"
-  for glob in $globs; do
-    find "$PROJECTS_ROOT" -maxdepth 5 \
-      \( -path "*/node_modules/*" -o -path "*/.git/*" -o -path "*/.venv/*" \) -prune \
-      -o -name "$glob" -print -quit 2>/dev/null | grep -q . && return 0
+  local globs="$1" glob name
+  local -a glob_list
+  # `read -ra`, not `for glob in $globs`: an unquoted expansion is pathname-expanded
+  # against the CALLER's cwd, so run from the repo root the glob `*.sh` silently
+  # became the literal `install.sh` and Bash detection looked for that filename.
+  # read performs word splitting without pathname expansion.
+  read -ra glob_list <<< "$globs"
+  for glob in "${glob_list[@]}"; do
+    while IFS= read -r name; do
+      # shellcheck disable=SC2053  # unquoted $glob is the point: same match semantics as find -name
+      if [[ "$name" == $glob ]]; then return 0; fi
+    done <<< "$ALL_NAMES"
   done
   return 1
 }

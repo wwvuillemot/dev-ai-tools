@@ -8,9 +8,14 @@ Ordinary AI review has two failure modes: it reports things that aren't real, an
 
 ```bash
 claude plugin marketplace add wwvuillemot/dev-ai-tools
+claude plugin install deep-review@dev-ai-tools
 ```
 
-Then `/plugin install deep-review`.
+Restart Claude Code afterwards — plugins load at session start.
+
+This installs `deep-review` only. The marketplace also publishes
+[practices](../practices/), installed by its own command; see the
+[repo README](../../README.md#claude-code-plugins).
 
 ## Use
 
