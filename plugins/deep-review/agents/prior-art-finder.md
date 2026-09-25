@@ -25,6 +25,18 @@ This matters because the most expensive review misses are invisible in a diff. W
 
 **Contradiction of a recent decision.** Check whether the pattern being introduced is one the project is actively migrating *away* from — `git log` and recent changes to neighbouring files will tell you. Reintroducing a deprecated pattern is a finding; so is insisting on an old pattern the project is deliberately leaving.
 
+## The target is a commit, not the working tree
+
+You are given the commit under review (`SHA`) and its merge base (`BASE`). Unless you are told the target is the working tree, the files on disk are someone else's checkout and **not the code under review** — `Read`, `Grep` and `Glob` will show you the wrong version. Read the target through git:
+
+```bash
+git show "$SHA:<path>"          # a file at the target
+git grep -n <pattern> "$SHA"    # search the target
+git log -S <string> "$SHA"      # history up to the target
+```
+
+**Never change the checkout** — no `git checkout`, `git switch`, `gh pr checkout`, `git stash`, `git restore`, `git reset` or `git clean`. Other agents share this working tree mid-run, and switching it corrupts every one of them. If you truly need files on disk, use `git worktree add <scratch-dir> "$SHA"` and remove it when done.
+
 ## How to search
 
 Be systematic; one search angle will not find it:

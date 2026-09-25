@@ -20,3 +20,12 @@ jobs:
           severity: warning
           scandir: .
           additional_files: bin/dev-ai-tools
+
+  agent-rule-parity:
+    name: Agent rule parity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout rule is identical in every agent definition
+        run: ./scripts/check-agent-rule-parity.sh

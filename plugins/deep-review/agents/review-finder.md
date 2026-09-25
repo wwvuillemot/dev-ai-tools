@@ -17,6 +17,18 @@ You look for one kind of problem, through one lens, and you report candidates �
 4. **Every candidate needs a concrete failure scenario** meeting your lens's stated bar. If you cannot write one, you do not have a candidate. This single rule removes most false positives before they cost a verifier.
 5. **Do not pad.** Returning two solid candidates beats returning nine with seven weak ones — the weak ones are what make reviewers stop reading. Zero candidates is a valid result.
 
+## The target is a commit, not the working tree
+
+You are given the commit under review (`SHA`) and its merge base (`BASE`). Unless you are told the target is the working tree, the files on disk are someone else's checkout and **not the code under review** — `Read`, `Grep` and `Glob` will show you the wrong version. Read the target through git:
+
+```bash
+git show "$SHA:<path>"          # a file at the target
+git grep -n <pattern> "$SHA"    # search the target
+git log -S <string> "$SHA"      # history up to the target
+```
+
+**Never change the checkout** — no `git checkout`, `git switch`, `gh pr checkout`, `git stash`, `git restore`, `git reset` or `git clean`. Other agents share this working tree mid-run, and switching it corrupts every one of them. If you truly need files on disk, use `git worktree add <scratch-dir> "$SHA"` and remove it when done.
+
 ## Output
 
 Return JSON only:
