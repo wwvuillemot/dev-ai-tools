@@ -12,6 +12,8 @@ make update VERSION=v0.5.1
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-24
+
 ### Added
 - **CI now fails if the `deep-review` checkout rule drifts between agent definitions.** The "target is a commit, not the working tree" block is duplicated verbatim in all three `plugins/deep-review/agents/*.md`, because subagents never read `SKILL.md` — and nothing kept the copies in step. `scripts/check-agent-rule-parity.sh` extracts the block from each and fails the build when they differ, so adding a newly-banned command to one copy and forgetting the others is caught rather than leaving that agent silently under the weaker rule.
 
@@ -164,7 +166,8 @@ make update VERSION=v0.5.1
 ### Changed
 - Troubleshooting section updated for the VS Code MCP deprecation warning.
 
-[Unreleased]: https://github.com/wwvuillemot/dev-ai-tools/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/wwvuillemot/dev-ai-tools/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/wwvuillemot/dev-ai-tools/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/wwvuillemot/dev-ai-tools/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/wwvuillemot/dev-ai-tools/compare/v0.5.4...v0.6.0
 [0.5.4]: https://github.com/wwvuillemot/dev-ai-tools/compare/v0.5.3...v0.5.4
