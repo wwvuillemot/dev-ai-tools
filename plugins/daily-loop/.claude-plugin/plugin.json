@@ -1,0 +1,8 @@
+{
+  "name": "daily-loop",
+  "version": "0.1.0",
+  "description": "Scheduled operational loop: collect production and CI signals, triage them against what is already filed, file issues, fix what the repo authorises, and hand every branch to adversarial review before opening a PR. Never merges.",
+  "author": { "name": "Ward Vuillemot" },
+  "homepage": "https://github.com/wwvuillemot/dev-ai-tools",
+  "license": "MIT"
+}

@@ -12,6 +12,9 @@ make update VERSION=v0.5.1
 
 ## [Unreleased]
 
+### Added
+- **`daily-loop` plugin (`0.1.0`) — a scheduled operational loop for any repository.** Collects production and CI signals (Sentry issues, failing runs, security alerts, log aggregates), triages them into a P0/P1/P2 Pareto against what is already filed, files issues that read as specs rather than stack-trace dumps, fans out `loop-fixer` sub-agents one per issue in isolated worktrees, puts every branch through `deep-review`, and **stops at merge-ready** — a human merges. Repo-specific configuration lives in `.claude/daily-loop.yml`; with no config the loop is report-only and changes nothing. That file's `may:` list is the standing autonomy line `autonomy-contract` asks for, and it is the grant — the skill is a playbook, not authority. Adversarial review is the sibling `deep-review` plugin rather than a second reviewer, and the discipline skills in `practices` are assumed rather than restated. Scheduling is the harness's (`/schedule`, `/loop`), not the plugin's.
+
 ## [0.8.1] - 2026-09-24
 
 ### Changed
