@@ -12,6 +12,8 @@ make update VERSION=v0.5.1
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-09-24
+
 ### Changed
 - **`autonomy-contract` (plugin `0.1.2`) now says in its own words that naming a destination is the gate.** Its two failure modes already defined the bad case as publishing outward *"without a gate"* (L13), but the "Always stop for these" list restated it flatly as "publishing outward", with no hint that an explicitly named target satisfies it. A reader who checked the list and stopped there concluded that any publish is an unconditional stop — which is exactly what happened when `deep-review` began posting to a named PR by default: a review raised the two skills as contradictory, and the contradiction was in one file's own wording. The list entry now carries the qualifier and an example.
 
@@ -169,7 +171,8 @@ make update VERSION=v0.5.1
 ### Changed
 - Troubleshooting section updated for the VS Code MCP deprecation warning.
 
-[Unreleased]: https://github.com/wwvuillemot/dev-ai-tools/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/wwvuillemot/dev-ai-tools/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/wwvuillemot/dev-ai-tools/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/wwvuillemot/dev-ai-tools/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/wwvuillemot/dev-ai-tools/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/wwvuillemot/dev-ai-tools/compare/v0.5.4...v0.6.0
