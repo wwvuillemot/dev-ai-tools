@@ -45,6 +45,15 @@
         "agent-discipline",
         "code-quality"
       ]
+    },
+    {
+      "name": "daily-loop",
+      "source": "./plugins/daily-loop",
+      "description": "Scheduled operational loop: collect production and CI signals, triage against what is already filed, file issues that read as specs, fix what the repo authorises in isolated worktrees, run adversarial review on every branch, and stop at merge-ready. Never merges.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Ward Vuillemot"
+      }
     }
   ]
 }

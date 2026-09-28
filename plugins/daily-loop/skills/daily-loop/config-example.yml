@@ -1,0 +1,40 @@
+# .claude/daily-loop.yml — per repo. The loop reads this and nothing else.
+# Absent file means the loop runs in report-only mode and files nothing.
+
+sources:
+  sentry:
+    org: my-org
+    project: my-project
+    environment: production
+    # only issues seen since the last run, above this event count
+    min_events: 5
+  ci:
+    # failures on these branches count as signals
+    branches: [main]
+  security:
+    dependabot: true
+
+# What the loop may do without asking. This IS the standing autonomy line
+# that practices/autonomy-contract asks you to write down per project.
+may:
+  - file-issues
+  - open-prs
+# Never available, regardless of what is listed above:
+#   merging, deploying, force-pushing, resolving review threads,
+#   touching the working checkout, closing someone else's issue.
+
+budget:
+  # hard caps per run, so a bad day cannot produce forty PRs
+  max_issues_filed: 5
+  max_fixes_attempted: 2
+
+review:
+  # adversarial review is the sibling deep-review plugin, not a reimplementation
+  plugin: deep-review
+  lenses: [correctness, blast-radius]
+  depth: standard
+
+ledger:
+  # a single issue the loop appends to each run, so the next run knows
+  # what it already saw. Created on first run if missing.
+  label: "daily-loop:ledger"
